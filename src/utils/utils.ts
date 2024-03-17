@@ -1,6 +1,7 @@
 import invariant from 'invariant';
 import { Children, ReactElement } from 'react';
 import lettersDiacritics from './diacritics';
+import { DataSource } from '../MentionsTextField';
 
 enum Placeholders {
     id = '__id__',
@@ -187,15 +188,12 @@ export function getPlainText(value: string, config: MentionConfig[]): string {
  * @param children The children to pull the MentionConfigs from.
  * @returns An array of MentionConfig objects.
  */
-export function readConfigFromChildren(children: React.ReactNode): MentionConfig[] {
-    return Children.toArray(children).map((child) => {
-        const {
-            props: { markup, regex, displayTransform },
-        } = child as ReactElement<MentionConfig>;
+export function readConfigFromChildren(children: DataSource[]): MentionConfig[] {
+    return children.map((child) => {
         return {
-            markup,
-            regex: regex ? verifyCapturingGroups(regex, markup) : markupToRegex(markup),
-            displayTransform: displayTransform || ((id: string, display: string) => display || id),
+            markup: child.markup,
+            regex: child.regex ? verifyCapturingGroups(child.regex, child.markup) : markupToRegex(child.markup),
+            displayTransform: child.displayTransform || ((id: string, display: string) => display || id),
         };
     });
 }

@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { useEffect } from 'react';
 import Suggestion from './Suggestion';
 import { Data } from './utils/utils';
-import { SuggestionMap } from './MentionsInput';
+import { SuggestionMap } from './MentionsTextField';
 
 interface SuggestionsOverlayProps {
     id: string;

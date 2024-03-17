@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Position } from './MentionsInput';
+import { Position } from './MentionsTextField';
 import { Box } from '@mui/material';
 import React from 'react';
 

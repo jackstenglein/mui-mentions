@@ -14,9 +14,11 @@ interface MentionProps {
 
     /** Styles to apply to the mention. */
     sx?: SxProps;
+
+    markup?: string;
 }
 
-const Mention: React.FC<MentionProps> = ({ display, sx }) => {
+const Mention: React.FC<MentionProps> = ({ display, sx, markup = '@[__display__](__id__)' }) => {
     return (
         <Box component='span' sx={sx}>
             {display}

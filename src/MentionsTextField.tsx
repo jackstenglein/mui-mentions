@@ -1,4 +1,4 @@
-import { Box, TextField, TextFieldProps } from '@mui/material';
+import { Box, TextField, TextFieldProps, TextFieldVariants } from '@mui/material';
 import React, { Children, useMemo, useState } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import Highlighter from './Highlighter';
@@ -51,6 +51,31 @@ export interface SuggestionMap {
     [index: number]: Suggestion;
 }
 
+export interface DataSource {
+    trigger: string;
+    data: Data[];
+    markup: string;
+    regex?: RegExp;
+    allowSpaceInQuery?: boolean;
+    displayTransform?: (id: string, display: string) => string;
+}
+
+interface MentionsTextFieldBaseProps {
+    value: string;
+    onChange: (newValue: string, newPlainText: string, mentions: MentionData[]) => void;
+    dataSources: DataSource[];
+
+    allowSuggestionsAboveCursor?: boolean;
+    forceSuggestionsAboveCursor?: boolean;
+    ignoreAccents?: boolean;
+}
+
+type MentionsTextFieldProps<Variant extends TextFieldVariants = TextFieldVariants> = Omit<
+    TextFieldProps<Variant>,
+    'onChange'
+> &
+    MentionsTextFieldBaseProps;
+
 interface MentionsInputProps {
     value: string;
     onChange: (
@@ -68,7 +93,7 @@ interface MentionsInputProps {
     ignoreAccents?: boolean;
 }
 
-const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (props) => {
+const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     const inputElement = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
     const containerElement = useRef<HTMLElement>(null);
     const highlighterElement = useRef<HTMLDivElement>(null);
@@ -114,7 +139,7 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
         setFocusIndex(0);
     };
 
-    const handleKeyDown = (ev: React.KeyboardEvent) => {
+    const handleKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>) => {
         const suggestionsCount = countSuggestions(suggestions);
 
         if (suggestionsCount === 0 || !suggestionsElement.current) {
@@ -233,9 +258,9 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
         querySequenceEnd: number,
         plainTextValue: string,
     ) => {
-        const { children, ignoreAccents } = props;
-        const mentionChild = Children.toArray(children)[childIndex] as React.ReactElement;
-        const provideData = getDataProvider(mentionChild.props.data, ignoreAccents);
+        const { ignoreAccents } = props;
+        const mentionChild = props.dataSources[childIndex];
+        const provideData = getDataProvider(mentionChild.data, ignoreAccents);
         const syncResult = provideData(query);
 
         if (syncResult instanceof Array) {
@@ -256,13 +281,14 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
         queryId.current++;
         setSuggestions({});
 
-        const { value, children } = props;
-        const config = readConfigFromChildren(children);
+        const { value } = props;
+        const config = readConfigFromChildren(props.dataSources);
 
         const positionInValue = mapPlainTextIndex(value, config, caretPosition, 'NULL');
 
         // If caret is inside of mention, do not query
         if (positionInValue === null) {
+            console.log('Position in value is null');
             return;
         }
 
@@ -272,14 +298,16 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
 
         // Check if suggestions have to be shown:
         // Match the trigger patterns of all Mention children on the extracted substring
-        React.Children.forEach(children, (child, childIndex) => {
-            if (!child) {
+        props.dataSources.forEach((source, childIndex) => {
+            if (!source) {
+                console.log('No source');
                 return;
             }
 
-            const regex = makeTriggerRegex(props.trigger, props.allowSpaceInQuery);
+            const regex = makeTriggerRegex(source.trigger, source.allowSpaceInQuery);
             const match = substring.match(regex);
             if (match) {
+                console.log('Querying data');
                 const querySequenceStart = substringStartIndex + substring.indexOf(match[1], match.index);
                 queryData(
                     match[2],
@@ -309,9 +337,9 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
         }: { childIndex: number; querySequenceStart: number; querySequenceEnd: number; plainTextValue: string },
     ) => {
         // Insert mention in the marked up value at the correct position
-        const config = readConfigFromChildren(props.children);
-        const mentionsChild = Children.toArray(props.children)[childIndex] as React.ReactElement;
-        const { markup, displayTransform, appendSpaceOnAdd, onAdd } = mentionsChild.props;
+        const config = readConfigFromChildren(props.dataSources);
+        const mentionsChild = config[childIndex];
+        const { markup, displayTransform /*appendSpaceOnAdd, onAdd*/ } = mentionsChild;
 
         const start = mapPlainTextIndex(props.value, config, querySequenceStart, 'START');
         if (!isNumber(start)) {
@@ -322,33 +350,36 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
 
         let insert = makeMentionsMarkup(markup, id, display);
 
-        if (appendSpaceOnAdd) {
-            insert += ' ';
-        }
+        // TODO: potentially add back
+        // if (appendSpaceOnAdd) {
+        //     insert += ' ';
+        // }
         const newValue = spliceString(props.value, start, end, insert);
 
         // Refocus input and set caret position to end of mention
         inputElement.current?.focus();
 
         let displayValue = displayTransform(id, display);
-        if (appendSpaceOnAdd) {
-            displayValue += ' ';
-        }
+
+        // TODO: potentially add back
+        // if (appendSpaceOnAdd) {
+        //     displayValue += ' ';
+        // }
         const newCaretPosition = querySequenceStart + displayValue.length;
         setSelectionStart(newCaretPosition);
         setSelectionEnd(newCaretPosition);
         setSelectionAfterMentionChange(true);
 
         // Propagate change
-        const eventMock = { target: { value: newValue } };
         const mentions = getMentions(newValue, config);
         const newPlainTextValue = spliceString(plainTextValue, querySequenceStart, querySequenceEnd, displayValue);
 
-        props.onChange(eventMock as React.ChangeEvent<HTMLInputElement>, newValue, newPlainTextValue, mentions);
+        props.onChange(newValue, newPlainTextValue, mentions);
 
-        if (onAdd) {
-            onAdd(id, display, start, end);
-        }
+        // TODO: potentially add back
+        // if (onAdd) {
+        //     onAdd(id, display, start, end);
+        // }
 
         // Make sure the suggestions overlay is closed
         clearSuggestions();
@@ -358,7 +389,7 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
         console.log('Ev: ', ev);
 
         const value = props.value || '';
-        const config = readConfigFromChildren(props.children);
+        const config = readConfigFromChildren(props.dataSources);
 
         let newPlainTextValue = ev.target.value;
 
@@ -408,13 +439,13 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
 
         const mentions = getMentions(newValue, config);
 
-        if ((ev.nativeEvent as any).isComposing && selectionStart === selectionEnd) {
+        if (selectionStart === selectionEnd) {
+            console.log('Update mentions queries');
             updateMentionsQueries(inputElement.current?.value || '', selectionStart || 0);
         }
 
         // Propagate change
-        const eventMock = { ...ev, target: { ...ev.target, value: newValue } };
-        props.onChange(eventMock, newValue, newPlainTextValue, mentions);
+        props.onChange(newValue, newPlainTextValue, mentions);
     };
 
     const handleSelect = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -441,7 +472,7 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
     };
 
     const inputProps: TextFieldProps = {
-        value: getPlainText(props.value, readConfigFromChildren(props.children)),
+        value: getPlainText(props.value, readConfigFromChildren(props.dataSources)),
         onChange: handleChange,
         onSelect: handleSelect,
         onKeyDown: handleKeyDown,
@@ -472,9 +503,7 @@ const MentionsInput: React.FC<React.PropsWithChildren<MentionsInputProps>> = (pr
                 onMouseDown={handleSuggestionsMouseDown}
                 onMouseEnter={handleSuggestionsMouseEnter}
                 ignoreAccents={props.ignoreAccents}
-            >
-                {props.children}
-            </SuggestionsOverlay>
+            />
         </Box>
     );
 };
