@@ -28,14 +28,6 @@ export interface Position {
     right: number;
 }
 
-enum Key {
-    Tab = 'Tab',
-    Return = 'Enter',
-    Escape = 'Escape',
-    Up = 'ArrowUp',
-    Down = 'ArrowDown',
-}
-
 interface Suggestion {
     queryInfo: {
         childIndex: number;
@@ -58,6 +50,7 @@ export interface DataSource {
     regex?: RegExp;
     allowSpaceInQuery?: boolean;
     displayTransform?: (id: string, display: string) => string;
+    ignoreAccents?: boolean;
 }
 
 interface MentionsTextFieldBaseProps {
@@ -67,7 +60,6 @@ interface MentionsTextFieldBaseProps {
 
     allowSuggestionsAboveCursor?: boolean;
     forceSuggestionsAboveCursor?: boolean;
-    ignoreAccents?: boolean;
 }
 
 type MentionsTextFieldProps<Variant extends TextFieldVariants = TextFieldVariants> = Omit<
@@ -100,7 +92,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     const suggestionsElement = useRef<HTMLDivElement>(null);
 
     const suggestionsMouseDown = useRef(false);
-    const isComposing = useRef(false);
     const queryId = useRef(0);
 
     const suggestionsOverlayPosition = useSuggestionsOverlayPosition({
@@ -111,70 +102,13 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
         containerElement,
     });
 
-    const [suggestionsOverlayId] = useState(Math.random().toString(16).substring(2));
-
-    const [suggestions, setSuggestions] = useState<SuggestionMap>({});
-    const [focusIndex, setFocusIndex] = useState(0);
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
+
     const [selectionAfterPaste, setSelectionAfterPaste] = useState(false);
     const [selectionAfterMentionChange, setSelectionAfterMentionChange] = useState(false);
     const [scrollFocusedIntoView, setScrollFocusedIntoView] = useState(false);
     const [caretPosition, setCaretPosition] = useState<Position | null>(null);
-
-    const shiftFocus = (delta: number) => {
-        const suggestionsCount = countSuggestions(suggestions);
-        setFocusIndex((suggestionsCount + focusIndex + delta) % suggestionsCount);
-        setScrollFocusedIntoView(true);
-    };
-
-    const selectFocused = () => {
-        // TODO: improve typing
-        const { result, queryInfo } = Object.values(suggestions).reduce(
-            (acc, { results, queryInfo }) => [...acc, ...results.map((result: Data) => ({ result, queryInfo }))],
-            [],
-        )[focusIndex];
-        addMention(result, queryInfo);
-
-        setFocusIndex(0);
-    };
-
-    const handleKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>) => {
-        const suggestionsCount = countSuggestions(suggestions);
-
-        if (suggestionsCount === 0 || !suggestionsElement.current) {
-            // do not intercept key events if the suggestions overlay is not shown
-            props.onKeyDown?.(ev);
-            return;
-        }
-
-        switch (ev.key) {
-            case Key.Escape: {
-                clearSuggestions();
-                break;
-            }
-            case Key.Down: {
-                shiftFocus(+1);
-                break;
-            }
-            case Key.Up: {
-                shiftFocus(-1);
-                break;
-            }
-
-            case Key.Return:
-            case Key.Tab: {
-                selectFocused();
-                break;
-            }
-            default: {
-                return;
-            }
-        }
-
-        ev.preventDefault();
-        ev.stopPropagation();
-    };
 
     const handleBlur = (ev: React.FocusEvent) => {
         if (!suggestionsMouseDown.current) {
@@ -188,143 +122,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
 
     const handleSuggestionsMouseDown = () => {
         suggestionsMouseDown.current = true;
-    };
-
-    const handleSuggestionsMouseEnter = (focusIndex: number) => {
-        setFocusIndex(focusIndex);
-        setScrollFocusedIntoView(false);
-    };
-
-    const handleCompositionStart = () => {
-        isComposing.current = true;
-    };
-
-    const handleCompositionEnd = () => {
-        isComposing.current = false;
-    };
-
-    const setSelection = (selectionStart: number | null, selectionEnd: number | null) => {
-        if (selectionStart === null || selectionEnd === null) return;
-
-        const el = inputElement.current;
-        if (el?.setSelectionRange) {
-            el.setSelectionRange(selectionStart, selectionEnd);
-        } else if (el && (el as any).createTextRange) {
-            const range = (el as any).createTextRange();
-            range.collapse(true);
-            range.moveEnd('character', selectionEnd);
-            range.moveStart('character', selectionStart);
-            range.select();
-        }
-    };
-
-    const updateSuggestions = (
-        currentQuery: number,
-        childIndex: number,
-        query: string,
-        querySequenceStart: number,
-        querySequenceEnd: number,
-        plainTextValue: string,
-        results: Data[],
-    ) => {
-        // neglect async results from previous queries
-        if (currentQuery !== queryId.current) return;
-
-        // save in property so that multiple sync state updates from different mentions sources
-        // won't overwrite each other
-        const newSuggestions = {
-            ...suggestions,
-            [childIndex]: {
-                queryInfo: {
-                    childIndex,
-                    query,
-                    querySequenceStart,
-                    querySequenceEnd,
-                    plainTextValue,
-                },
-                results,
-            },
-        };
-
-        const suggestionsCount = countSuggestions(newSuggestions);
-        setSuggestions(newSuggestions);
-        setFocusIndex(focusIndex >= suggestionsCount ? Math.max(suggestionsCount - 1, 0) : focusIndex);
-    };
-
-    const queryData = (
-        query: string,
-        childIndex: number,
-        querySequenceStart: number,
-        querySequenceEnd: number,
-        plainTextValue: string,
-    ) => {
-        const { ignoreAccents } = props;
-        const mentionChild = props.dataSources[childIndex];
-        const provideData = getDataProvider(mentionChild.data, ignoreAccents);
-        const syncResult = provideData(query);
-
-        if (syncResult instanceof Array) {
-            updateSuggestions(
-                queryId.current,
-                childIndex,
-                query,
-                querySequenceStart,
-                querySequenceEnd,
-                plainTextValue,
-                syncResult,
-            );
-        }
-    };
-
-    const updateMentionsQueries = (plainTextValue: string, caretPosition: number) => {
-        // Invalidate previous queries. Async results for previous queries will be neglected.
-        queryId.current++;
-        setSuggestions({});
-
-        const { value } = props;
-        const config = readConfigFromChildren(props.dataSources);
-
-        const positionInValue = mapPlainTextIndex(value, config, caretPosition, 'NULL');
-
-        // If caret is inside of mention, do not query
-        if (positionInValue === null) {
-            console.log('Position in value is null');
-            return;
-        }
-
-        // Extract substring in between the end of the previous mention and the caret
-        const substringStartIndex = getEndOfLastMention(value.substring(0, positionInValue), config);
-        const substring = plainTextValue.substring(substringStartIndex, caretPosition);
-
-        // Check if suggestions have to be shown:
-        // Match the trigger patterns of all Mention children on the extracted substring
-        props.dataSources.forEach((source, childIndex) => {
-            if (!source) {
-                console.log('No source');
-                return;
-            }
-
-            const regex = makeTriggerRegex(source.trigger, source.allowSpaceInQuery);
-            const match = substring.match(regex);
-            if (match) {
-                console.log('Querying data');
-                const querySequenceStart = substringStartIndex + substring.indexOf(match[1], match.index);
-                queryData(
-                    match[2],
-                    childIndex,
-                    querySequenceStart,
-                    querySequenceStart + match[1].length,
-                    plainTextValue,
-                );
-            }
-        });
-    };
-
-    const clearSuggestions = () => {
-        // Invalidate previous queries. Async results for previous queries will be neglected.
-        queryId.current++;
-        setSuggestions({});
-        setFocusIndex(0);
     };
 
     const addMention = (
@@ -380,9 +177,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
         // if (onAdd) {
         //     onAdd(id, display, start, end);
         // }
-
-        // Make sure the suggestions overlay is closed
-        clearSuggestions();
     };
 
     const handleChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -439,11 +233,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
 
         const mentions = getMentions(newValue, config);
 
-        if (selectionStart === selectionEnd) {
-            console.log('Update mentions queries');
-            updateMentionsQueries(inputElement.current?.value || '', selectionStart || 0);
-        }
-
         // Propagate change
         props.onChange(newValue, newPlainTextValue, mentions);
     };
@@ -452,17 +241,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
         // keep track of selection range / caret position
         setSelectionStart(ev.target.selectionStart);
         setSelectionEnd(ev.target.selectionEnd);
-
-        // do nothing while a IME composition session is active
-        if (isComposing) return;
-
-        // refresh suggestions queries
-        const el = inputElement.current;
-        if (ev.target.selectionStart === ev.target.selectionEnd) {
-            updateMentionsQueries(el?.value || '', ev.target.selectionStart || 0);
-        } else {
-            clearSuggestions();
-        }
 
         // sync highlighters scroll position
         // TODO
@@ -475,10 +253,7 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
         value: getPlainText(props.value, readConfigFromChildren(props.dataSources)),
         onChange: handleChange,
         onSelect: handleSelect,
-        onKeyDown: handleKeyDown,
         onBlur: handleBlur,
-        onCompositionStart: handleCompositionStart,
-        onCompositionEnd: handleCompositionEnd,
     };
 
     return (
@@ -488,21 +263,20 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
                 <TextField inputRef={inputElement} {...inputProps} />
             </Box>
             <SuggestionsOverlay
-                id={suggestionsOverlayId}
                 open={selectionStart !== undefined}
+                value={props.value}
+                dataSources={props.dataSources}
+                selectionStart={selectionStart}
+                selectionEnd={selectionEnd}
                 containerRef={suggestionsElement}
                 // TODO
-                suggestions={suggestions}
                 scrollFocusedIntoView={scrollFocusedIntoView}
-                focusIndex={focusIndex}
                 loading={false}
                 left={suggestionsOverlayPosition?.left || 0}
                 top={suggestionsOverlayPosition?.top || 0}
                 right={suggestionsOverlayPosition?.right || 0}
                 onSelect={addMention}
                 onMouseDown={handleSuggestionsMouseDown}
-                onMouseEnter={handleSuggestionsMouseEnter}
-                ignoreAccents={props.ignoreAccents}
             />
         </Box>
     );
