@@ -68,23 +68,6 @@ type MentionsTextFieldProps<Variant extends TextFieldVariants = TextFieldVariant
 > &
     MentionsTextFieldBaseProps;
 
-interface MentionsInputProps {
-    value: string;
-    onChange: (
-        event: React.ChangeEvent<HTMLInputElement>,
-        newValue: string,
-        newPlainTextValue: string,
-        mentions: MentionData[],
-    ) => void;
-    trigger: string | RegExp;
-    onSelect?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    onKeyDown?: (event: React.KeyboardEvent) => void;
-    allowSuggestionsAboveCursor?: boolean;
-    forceSuggestionsAboveCursor?: boolean;
-    allowSpaceInQuery?: boolean;
-    ignoreAccents?: boolean;
-}
-
 const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     const inputElement = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
     const containerElement = useRef<HTMLElement>(null);
@@ -92,7 +75,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     const suggestionsElement = useRef<HTMLDivElement>(null);
 
     const suggestionsMouseDown = useRef(false);
-    const queryId = useRef(0);
 
     const suggestionsOverlayPosition = useSuggestionsOverlayPosition({
         allowSuggestionsAboveCursor: props.allowSuggestionsAboveCursor,
@@ -105,19 +87,28 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
 
-    const [selectionAfterPaste, setSelectionAfterPaste] = useState(false);
-    const [selectionAfterMentionChange, setSelectionAfterMentionChange] = useState(false);
     const [scrollFocusedIntoView, setScrollFocusedIntoView] = useState(false);
-    const [caretPosition, setCaretPosition] = useState<Position | null>(null);
 
-    const handleBlur = (ev: React.FocusEvent) => {
+    useEffect(() => {
+        const onScroll = () => {
+            if (!highlighterElement.current || !inputElement.current) {
+                return;
+            }
+            highlighterElement.current.scrollLeft = inputElement.current.scrollLeft;
+            highlighterElement.current.scrollTop = inputElement.current.scrollTop;
+            console.log('Scroll effect: ', highlighterElement.current.scrollTop);
+        };
+
+        inputElement.current?.addEventListener('scroll', onScroll);
+        return () => inputElement.current?.removeEventListener('scroll', onScroll);
+    }, [inputElement, highlighterElement]);
+
+    const handleBlur = () => {
         if (!suggestionsMouseDown.current) {
             setSelectionStart(null);
             setSelectionEnd(null);
         }
         suggestionsMouseDown.current = false;
-
-        // TODO: extra stuff in this function to potentially copy? Not sure if necessary
     };
 
     const handleSuggestionsMouseDown = () => {
@@ -165,7 +156,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
         const newCaretPosition = querySequenceStart + displayValue.length;
         setSelectionStart(newCaretPosition);
         setSelectionEnd(newCaretPosition);
-        setSelectionAfterMentionChange(true);
 
         // Propagate change
         const mentions = getMentions(newValue, config);
@@ -180,8 +170,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     };
 
     const handleChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        console.log('Ev: ', ev);
-
         const value = props.value || '';
         const config = readConfigFromChildren(props.dataSources);
 
@@ -229,7 +217,6 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
 
         setSelectionStart(selectionStartAfter);
         setSelectionEnd(selectionEndAfter);
-        setSelectionAfterMentionChange(selectionAfterMentionChange);
 
         const mentions = getMentions(newValue, config);
 
@@ -238,28 +225,34 @@ const MentionsInput: React.FC<MentionsTextFieldProps> = (props) => {
     };
 
     const handleSelect = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        // keep track of selection range / caret position
         setSelectionStart(ev.target.selectionStart);
         setSelectionEnd(ev.target.selectionEnd);
-
-        // sync highlighters scroll position
-        // TODO
-        // this.updateHighlighterScroll();
-
         props.onSelect?.(ev);
     };
 
+    const { value, onChange, dataSources, allowSuggestionsAboveCursor, forceSuggestionsAboveCursor, ...others } = props;
     const inputProps: TextFieldProps = {
-        value: getPlainText(props.value, readConfigFromChildren(props.dataSources)),
+        ...others,
+        value: getPlainText(value, readConfigFromChildren(dataSources)),
         onChange: handleChange,
         onSelect: handleSelect,
         onBlur: handleBlur,
+        inputProps: {
+            sx: { overscrollBehavior: 'none' },
+        },
     };
 
     return (
         <Box ref={containerElement}>
-            <Box id='mui-mentions-control'>
-                <Highlighter containerRef={highlighterElement} />
+            <TextField multiline fullWidth minRows={3} maxRows={7} />
+
+            <Box id='mui-mentions-control' sx={{ position: 'relative' }}>
+                <Highlighter
+                    containerRef={highlighterElement}
+                    inputRef={inputElement}
+                    value={value}
+                    dataSources={dataSources}
+                />
                 <TextField inputRef={inputElement} {...inputProps} />
             </Box>
             <SuggestionsOverlay

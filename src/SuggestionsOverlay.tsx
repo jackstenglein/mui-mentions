@@ -74,25 +74,25 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
     const [suggestions, setSuggestions] = useState<SuggestionMap>({});
     const [focusIndex, setFocusIndex] = useState(0);
 
-    useEffect(() => {
-        const current = ulElement.current;
-        if (!scrollFocusedIntoView || !current || current.offsetHeight >= current.scrollHeight) {
-            return;
-        }
+    // useEffect(() => {
+    //     const current = ulElement.current;
+    //     if (!scrollFocusedIntoView || !current || current.offsetHeight >= current.scrollHeight) {
+    //         return;
+    //     }
 
-        const scrollTop = current.scrollTop;
+    //     const scrollTop = current.scrollTop;
 
-        let { top, bottom } = current.children[focusIndex].getBoundingClientRect();
-        const { top: topContainer } = current.getBoundingClientRect();
-        top = top - topContainer + scrollTop;
-        bottom = bottom - topContainer + scrollTop;
+    //     let { top, bottom } = current.children[focusIndex].getBoundingClientRect();
+    //     const { top: topContainer } = current.getBoundingClientRect();
+    //     top = top - topContainer + scrollTop;
+    //     bottom = bottom - topContainer + scrollTop;
 
-        if (top < scrollTop) {
-            current.scrollTop = top;
-        } else if (bottom > current.offsetHeight) {
-            current.scrollTop = bottom - current.offsetHeight;
-        }
-    }, [scrollFocusedIntoView, ulElement, focusIndex]);
+    //     if (top < scrollTop) {
+    //         current.scrollTop = top;
+    //     } else if (bottom > current.offsetHeight) {
+    //         current.scrollTop = bottom - current.offsetHeight;
+    //     }
+    // }, [scrollFocusedIntoView, ulElement, focusIndex]);
 
     const queryDataSource = useCallback(
         (
@@ -134,42 +134,28 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
             return;
         }
 
-        console.log('Value: ', value);
-
         const config = readConfigFromChildren(dataSources);
         const plainText = getPlainText(value, config);
 
-        console.log('Plain text: ', plainText);
-
         const positionInValue = mapPlainTextIndex(plainText, config, selectionStart, 'NULL');
-        console.log('Position in value: ', positionInValue);
         if (!positionInValue) {
             return;
         }
 
-        console.log('Selection start: ', selectionStart);
-
         const substringStartIndex = getEndOfLastMention(plainText.substring(0, positionInValue), config);
-        console.log('Substring start Index: ', substringStartIndex);
         const substring = plainText.substring(substringStartIndex, selectionStart);
-        console.log('Substring: ', substring);
 
         // Check if suggestions have to be shown:
         // Match the trigger patterns of all Mention children on the extracted substring
         dataSources.forEach((source, sourceIndex) => {
             if (!source) {
-                console.log('No source');
                 return;
             }
 
             const regex = makeTriggerRegex(source.trigger, source.allowSpaceInQuery);
             const match = substring.match(regex);
             if (match) {
-                console.log('Should show suggestions for source: ', source);
-                console.log('Match[1]: ', match[1]);
-                console.log('Match[2]: ', match[2]);
                 const querySequenceStart = substringStartIndex + substring.indexOf(match[1], match.index);
-                console.log('querySequenceStart: ', querySequenceStart);
                 queryDataSource(
                     source,
                     match[2],
