@@ -18,6 +18,7 @@
         "jsx": "react",
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "target": "ES2015"
     }
 }

@@ -1,4 +1,3 @@
-import Mention from './Mention';
-import MentionsInput from './MentionsTextField';
+import MentionsTextField from './MentionsTextField';
 
-export { Mention, MentionsInput };
+export { MentionsTextField };

@@ -1,9 +1,8 @@
 import { ListItemButton } from '@mui/material';
-import React from 'react';
+import React, { ReactNode } from 'react';
+import { BaseSuggestionData, DefaultDisplayTransform, SuggestionData } from './types';
 
-type SuggestionModel = string | { id: string; display: string };
-
-interface SuggestionProps {
+interface SuggestionProps<T extends BaseSuggestionData> {
     /** The id of the suggestion. */
     id: string;
 
@@ -14,13 +13,13 @@ interface SuggestionProps {
     index: number;
 
     /** The suggestion itself. */
-    suggestion: SuggestionModel;
+    suggestion: SuggestionData<T>;
 
     /** Whether the suggestion is focused by the user. */
     focused?: boolean;
 
     /** A function to customize the suggestion renderer. */
-    renderSuggestion?: (props: SuggestionProps) => JSX.Element;
+    renderSuggestion?: (props: SuggestionProps<T>) => JSX.Element;
 
     /** Called when the suggestion is clicked. */
     onClick?: React.MouseEventHandler<HTMLDivElement>;
@@ -29,14 +28,14 @@ interface SuggestionProps {
     onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-const Suggestion: React.FC<SuggestionProps> = (props) => {
+function Suggestion<T extends BaseSuggestionData>(props: SuggestionProps<T>): ReactNode {
     const { renderSuggestion, suggestion, focused, onClick, onMouseEnter } = props;
 
     if (renderSuggestion) {
         return renderSuggestion(props);
     }
 
-    const display = getDisplay(suggestion);
+    const display = DefaultDisplayTransform(suggestion.id, suggestion.display);
     return (
         <ListItemButton
             role='option'
@@ -48,19 +47,6 @@ const Suggestion: React.FC<SuggestionProps> = (props) => {
             {display}
         </ListItemButton>
     );
-};
+}
 
 export default Suggestion;
-
-/**
- * Returns the display string for the given suggestion.
- * @param suggestion The suggestion to get the display string for.
- * @returns The display string for the given suggestion.
- */
-function getDisplay(suggestion: SuggestionModel): string {
-    if (typeof suggestion === 'string') {
-        return suggestion;
-    }
-    const { id, display } = suggestion;
-    return display || id;
-}

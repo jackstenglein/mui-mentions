@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { MentionsInput } from '../../src';
+import { MentionsTextField } from '../../src';
 
 const App = () => {
     const [value, setValue] = useState('');
 
     return (
         <div>
-            <MentionsInput
+            <MentionsTextField
                 value={value}
                 onChange={(newValue) => setValue(newValue)}
                 multiline
@@ -36,11 +36,19 @@ const App = () => {
                             { id: '15', display: 'Test 2' },
                             { id: '16', display: 'Test 2' },
                             { id: '17', display: 'Test 2' },
+                            { id: '18', display: 'Test 2' },
+                            { id: '19', display: 'Test 2' },
+                            { id: '20', display: 'Test 2' },
+                            { id: '21', display: 'Test 2' },
+                            { id: '22', display: 'Test 2' },
+                            { id: '23', display: 'Test 2' },
+                            { id: '24', display: 'Test 2' },
+                            { id: '25', display: 'Test 2' },
                         ],
                         allowSpaceInQuery: false,
                     },
                 ]}
-            ></MentionsInput>
+            />
         </div>
     );
 };

@@ -1,102 +1,92 @@
-import { CircularProgress, List, Paper } from '@mui/material';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { useEffect } from 'react';
+import { CircularProgress, List, Paper, Popper } from '@mui/material';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Suggestion from './Suggestion';
 import {
-    Data,
+    BaseSuggestionData,
+    DefaultTrigger,
+    SuggestionData,
+    SuggestionDataSource,
+    Suggestions,
+    SuggestionsMap,
+    SuggestionsQueryInfo,
+} from './types';
+import {
     countSuggestions,
     getDataProvider,
     getEndOfLastMention,
     getPlainText,
     makeTriggerRegex,
     mapPlainTextIndex,
-    readConfigFromChildren,
 } from './utils/utils';
-import { DataSource, SuggestionMap } from './MentionsTextField';
 
-interface SuggestionsOverlayProps {
-    /** Whether the suggestions overlay is open. */
-    open: boolean;
-
+interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
+    /** The markup value string. */
     value: string;
 
-    dataSources: DataSource[];
+    /** An array of data sources used in the markup string. */
+    dataSources: SuggestionDataSource<T>[];
 
+    /** The start of the selected text range in the plain text value. */
     selectionStart: number | null;
+
+    /** The end of the selected text range in the plain text value. */
     selectionEnd: number | null;
 
     /** Whether the suggestions data is loading. */
     loading: boolean;
 
-    scrollFocusedIntoView: boolean;
+    /** A ref to the element which keeps track of the cursor position. */
+    cursorRef: React.RefObject<HTMLSpanElement>;
 
-    left: number;
-    right: number;
-    top: number;
-
-    containerRef: React.RefObject<HTMLDivElement>;
-
+    /** Callback invoked with the selected suggestion. */
     onSelect: (
-        { id, display }: Data,
-        {
-            childIndex,
-            querySequenceStart,
-            querySequenceEnd,
-            plainTextValue,
-        }: {
-            childIndex: number;
-            querySequenceStart: number;
-            querySequenceEnd: number;
-            plainTextValue: string;
-        },
+        { id, display }: SuggestionData<T>,
+        { childIndex, querySequenceStart, querySequenceEnd, plainTextValue }: SuggestionsQueryInfo,
     ) => void;
 
+    /** Callback invoked on mouse down in the suggestions overlay. */
     onMouseDown: () => void;
-
-    ignoreAccents?: boolean;
 }
 
-const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayProps>> = ({
-    value,
-    dataSources,
-    selectionStart,
-    selectionEnd,
-    loading,
-    scrollFocusedIntoView,
-    containerRef,
-    onSelect,
-    onMouseDown,
-    left,
-    right,
-    top,
-}) => {
+function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOverlayProps<T>) {
+    const { value, dataSources, selectionStart, selectionEnd, loading, cursorRef, onSelect, onMouseDown } = props;
     const ulElement = useRef<HTMLUListElement>(null);
-    const [suggestions, setSuggestions] = useState<SuggestionMap>({});
+    const [suggestions, setSuggestions] = useState<SuggestionsMap<T>>({});
     const [focusIndex, setFocusIndex] = useState(0);
+    const [scrollFocusedIntoView, setScrollFocusedIntoView] = useState(false);
 
-    // useEffect(() => {
-    //     const current = ulElement.current;
-    //     if (!scrollFocusedIntoView || !current || current.offsetHeight >= current.scrollHeight) {
-    //         return;
-    //     }
+    useEffect(() => {
+        const current = ulElement.current;
+        if (!scrollFocusedIntoView || !current) {
+            console.log('Returning early');
+            console.log('ScrollFocusedIntoView: ', scrollFocusedIntoView);
+            console.log('Current: ', current);
+            console.log('Current.offsetHeight: ', current?.offsetHeight);
+            console.log('Current.scrollHeight: ', current?.scrollHeight);
+            return;
+        }
 
-    //     const scrollTop = current.scrollTop;
+        console.log('Scrolling into view');
 
-    //     let { top, bottom } = current.children[focusIndex].getBoundingClientRect();
-    //     const { top: topContainer } = current.getBoundingClientRect();
-    //     top = top - topContainer + scrollTop;
-    //     bottom = bottom - topContainer + scrollTop;
+        const scrollTop = current.scrollTop;
 
-    //     if (top < scrollTop) {
-    //         current.scrollTop = top;
-    //     } else if (bottom > current.offsetHeight) {
-    //         current.scrollTop = bottom - current.offsetHeight;
-    //     }
-    // }, [scrollFocusedIntoView, ulElement, focusIndex]);
+        let { top, bottom } = current.children[focusIndex].getBoundingClientRect();
+        const { top: topContainer } = current.getBoundingClientRect();
+        top = top - topContainer + scrollTop;
+        bottom = bottom - topContainer + scrollTop;
+
+        if (top < scrollTop) {
+            current.scrollTop = top;
+        } else if (bottom > current.offsetHeight) {
+            current.scrollTop = bottom - current.offsetHeight;
+        }
+
+        setScrollFocusedIntoView(false);
+    }, [scrollFocusedIntoView, ulElement, focusIndex, setScrollFocusedIntoView]);
 
     const queryDataSource = useCallback(
         (
-            source: DataSource,
+            source: SuggestionDataSource<T>,
             query: string,
             sourceIndex: number,
             querySequenceStart: number,
@@ -128,21 +118,22 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
     );
 
     useEffect(() => {
+        console.log('Use effect firing');
+
         setSuggestions({});
 
         if (!selectionStart || selectionStart !== selectionEnd) {
             return;
         }
 
-        const config = readConfigFromChildren(dataSources);
-        const plainText = getPlainText(value, config);
+        const plainText = getPlainText(value, dataSources);
 
-        const positionInValue = mapPlainTextIndex(plainText, config, selectionStart, 'NULL');
+        const positionInValue = mapPlainTextIndex(plainText, dataSources, selectionStart, 'NULL');
         if (!positionInValue) {
             return;
         }
 
-        const substringStartIndex = getEndOfLastMention(plainText.substring(0, positionInValue), config);
+        const substringStartIndex = getEndOfLastMention(plainText.substring(0, positionInValue), dataSources);
         const substring = plainText.substring(substringStartIndex, selectionStart);
 
         // Check if suggestions have to be shown:
@@ -152,7 +143,7 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
                 return;
             }
 
-            const regex = makeTriggerRegex(source.trigger, source.allowSpaceInQuery);
+            const regex = makeTriggerRegex(source.trigger || DefaultTrigger, source.allowSpaceInQuery);
             const match = substring.match(regex);
             if (match) {
                 const querySequenceStart = substringStartIndex + substring.indexOf(match[1], match.index);
@@ -174,7 +165,7 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
     }, [setSuggestions, setFocusIndex]);
 
     const handleSelect = useCallback(
-        (result: Data, queryInfo: any) => {
+        (result: SuggestionData<T>, queryInfo: any) => {
             onSelect(result, queryInfo);
             clearSuggestions();
         },
@@ -184,7 +175,6 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
     const handleMouseEnter = useCallback(
         (focusIndex: number) => {
             setFocusIndex(focusIndex);
-            // setScrollFocusedIntoView(false);
         },
         [setFocusIndex],
     );
@@ -193,7 +183,7 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
         return Object.values(suggestions).reduce(
             (accResults, { results, queryInfo }) => [
                 ...accResults,
-                ...results.map((result: Data, index: number) => (
+                ...results.map((result: SuggestionData<T>, index: number) => (
                     <Suggestion
                         key={result.id}
                         id={result.id}
@@ -211,7 +201,8 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
     }, [suggestions, handleSelect, handleMouseEnter, focusIndex]);
 
     if (selectionStart === null || selectionStart !== selectionEnd) {
-        // The user either is not typing or has highlighted text, so we shouldn't show the suggestions
+        // The user either is not typing or has highlighted text,
+        // so we shouldn't show the suggestions
         return null;
     }
 
@@ -231,22 +222,16 @@ const SuggestionsOverlay: React.FC<React.PropsWithChildren<SuggestionsOverlayPro
                 onSelect={handleSelect}
                 focusIndex={focusIndex}
                 setFocusIndex={setFocusIndex}
+                setScrollFocusedIntoView={setScrollFocusedIntoView}
             />
-            <Paper
-                elevation={8}
-                ref={containerRef}
-                onMouseDown={onMouseDown}
-                sx={{
-                    left,
-                    top,
-                    right,
-                }}
-            >
-                <List ref={ulElement}>{renderedSuggestions}</List>
-            </Paper>
+            <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' disablePortal>
+                <Paper elevation={8} onMouseDown={onMouseDown}>
+                    <List ref={ulElement}>{renderedSuggestions}</List>
+                </Paper>
+            </Popper>
         </>
     );
-};
+}
 
 export default SuggestionsOverlay;
 
@@ -258,32 +243,33 @@ enum Key {
     Down = 'ArrowDown',
 }
 
-interface KeyboardListenerProps {
-    suggestions: SuggestionMap;
+interface KeyboardListenerProps<T extends BaseSuggestionData> {
+    suggestions: SuggestionsMap<T>;
     clearSuggestions: () => void;
     focusIndex: number;
     setFocusIndex: (v: number) => void;
-    onSelect: (result: Data, queryInfo: any) => void;
+    setScrollFocusedIntoView: (v: boolean) => void;
+    onSelect: (result: SuggestionData<T>, queryInfo: any) => void;
 }
 
-const KeyboardListener: React.FC<KeyboardListenerProps> = ({
-    suggestions,
-    clearSuggestions,
-    focusIndex,
-    setFocusIndex,
-    onSelect,
-}) => {
+function KeyboardListener<T extends BaseSuggestionData>(props: KeyboardListenerProps<T>): ReactNode {
+    const { suggestions, clearSuggestions, focusIndex, setFocusIndex, setScrollFocusedIntoView, onSelect } = props;
+
     useEffect(() => {
         const shiftFocus = (delta: number) => {
             const suggestionsCount = countSuggestions(suggestions);
             setFocusIndex((suggestionsCount + focusIndex + delta) % suggestionsCount);
-            // setScrollFocusedIntoView(true);
+            setScrollFocusedIntoView(true);
         };
 
         const selectFocused = () => {
-            // TODO: improve typing
-            const { result, queryInfo } = Object.values(suggestions).reduce(
-                (acc, { results, queryInfo }) => [...acc, ...results.map((result: Data) => ({ result, queryInfo }))],
+            const { result, queryInfo }: { result: SuggestionData<T>; queryInfo: SuggestionsQueryInfo } = Object.values(
+                suggestions,
+            ).reduce(
+                (acc: Suggestions<T>[], { results, queryInfo }: Suggestions<T>) => [
+                    ...acc,
+                    ...results.map((result: SuggestionData<T>) => ({ result, queryInfo })),
+                ],
                 [],
             )[focusIndex];
             onSelect(result, queryInfo);
@@ -320,7 +306,7 @@ const KeyboardListener: React.FC<KeyboardListenerProps> = ({
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [suggestions, clearSuggestions, focusIndex, setFocusIndex, onSelect]);
+    }, [suggestions, clearSuggestions, focusIndex, setFocusIndex, onSelect, setScrollFocusedIntoView]);
 
     return null;
-};
+}

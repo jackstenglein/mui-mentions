@@ -6,5 +6,6 @@
     "semi": true,
     "printWidth": 120,
     "jsxSingleQuote": true,
-    "endOfLine": "auto"
+    "endOfLine": "auto",
+    "plugins": ["prettier-plugin-organize-imports"]
 }

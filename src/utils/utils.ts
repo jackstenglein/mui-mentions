@@ -1,22 +1,17 @@
 import invariant from 'invariant';
-import { Children, ReactElement } from 'react';
+import {
+    BaseSuggestionData,
+    DefaultDisplayTransform,
+    DefaultMarkupTemplate,
+    SuggestionData,
+    SuggestionDataSource,
+    SuggestionsMap,
+} from '../types';
 import lettersDiacritics from './diacritics';
-import { DataSource } from '../MentionsTextField';
 
 enum Placeholders {
     id = '__id__',
     display = '__display__',
-}
-
-interface MentionConfig {
-    markup: string;
-    regex: RegExp;
-    displayTransform: (id: string, display: string) => string;
-}
-
-export interface Data {
-    id: string;
-    display: string;
 }
 
 /**
@@ -60,8 +55,8 @@ function combineRegExps(regExps: RegExp[]): RegExp {
  */
 function countPlaceholders(markup: string): number {
     let count = 0;
-    if (markup.indexOf('__id__') >= 0) count++;
-    if (markup.indexOf('__display__') >= 0) count++;
+    if (markup.indexOf(Placeholders.id) >= 0) count++;
+    if (markup.indexOf(Placeholders.display) >= 0) count++;
     return count;
 }
 
@@ -71,14 +66,14 @@ function countPlaceholders(markup: string): number {
  * @param parameterName The parameter name to find.
  * @returns The index of the parameter's capturing group.
  */
-function findIndexOfCapturingGroup(markup: string, parameterName: string): number {
+function findIndexOfCapturingGroup(markup: string, parameterName: 'id' | 'display'): number {
     invariant(
         parameterName === 'id' || parameterName === 'display',
         `Second arg must be either "id" or "display", got: "${parameterName}"`,
     );
 
-    let indexDisplay = markup.indexOf(Placeholders.display);
-    let indexId = markup.indexOf(Placeholders.id);
+    const indexDisplay = markup.indexOf(Placeholders.display);
+    const indexId = markup.indexOf(Placeholders.id);
 
     invariant(
         indexDisplay >= 0 || indexId >= 0,
@@ -101,13 +96,13 @@ function findIndexOfCapturingGroup(markup: string, parameterName: string): numbe
  * Searches the provided value for the mentions markup in the provided config and passes each found mention
  * to the provided processor functions.
  * @param value The value to search for the mentions markup.
- * @param config An array of all Mention configs.
+ * @param dataSources An array of all DataSources used in the markup.
  * @param markupProcessor A callback function that processes each mention markup instance.
  * @param plainTextProcessor A callback function that processes each plain text instance.
  */
-export function iterateMentionsMarkup(
+export function iterateMentionsMarkup<T extends BaseSuggestionData>(
     value: string,
-    config: MentionConfig[],
+    dataSources: SuggestionDataSource<T>[],
     markupProcessor: (
         match: string,
         matchIndex: number,
@@ -119,13 +114,19 @@ export function iterateMentionsMarkup(
     ) => void,
     plainTextProcessor?: (value: string, start: number, currentIndex: number) => void,
 ) {
-    const regex = combineRegExps(config.map((c) => c.regex));
+    const regex = combineRegExps(
+        dataSources.map((ds) =>
+            ds.regex
+                ? verifyCapturingGroups(ds.regex, ds.markup || DefaultMarkupTemplate)
+                : markupToRegex(ds.markup || DefaultMarkupTemplate),
+        ),
+    );
 
-    let accOffset = 2; // first is whole match, second is the for the capturing group of first regexp component
-    const captureGroupOffsets = config.map(({ markup }) => {
+    let accOffset = 2; // first is whole match, second is the capturing group of first regexp component
+    const captureGroupOffsets = dataSources.map(({ markup }) => {
         const result = accOffset;
         // + 1 is for the capturing group we add around each regexp component in combineRegExps
-        accOffset += countPlaceholders(markup) + 1;
+        accOffset += countPlaceholders(markup || DefaultMarkupTemplate) + 1;
         return result;
     });
 
@@ -141,14 +142,14 @@ export function iterateMentionsMarkup(
         }
 
         const mentionChildIndex = captureGroupOffsets.indexOf(offset);
-        const { markup, displayTransform } = config[mentionChildIndex];
-        const idPos = offset + findIndexOfCapturingGroup(markup, 'id');
-        const displayPos = offset + findIndexOfCapturingGroup(markup, 'display');
+        const { markup, displayTransform } = dataSources[mentionChildIndex];
+        const idPos = offset + findIndexOfCapturingGroup(markup || DefaultMarkupTemplate, 'id');
+        const displayPos = offset + findIndexOfCapturingGroup(markup || DefaultMarkupTemplate, 'display');
 
         const id = match[idPos];
-        const display = displayTransform(id, match[displayPos]);
+        const display = (displayTransform || DefaultDisplayTransform)(id, match[displayPos]);
 
-        let substr = value.substring(start, match.index);
+        const substr = value.substring(start, match.index);
         plainTextProcessor?.(substr, start, currentPlainTextIndex);
         currentPlainTextIndex += substr.length;
 
@@ -165,14 +166,17 @@ export function iterateMentionsMarkup(
 /**
  * Converts the given value to plain text.
  * @param value The value which possibly contains mention markup.
- * @param config An array of all Mention configs.
+ * @param dataSources An array of all DataSources used in the markup.
  * @returns value with mention markup converted to plain text.
  */
-export function getPlainText(value: string, config: MentionConfig[]): string {
+export function getPlainText<T extends BaseSuggestionData>(
+    value: string,
+    dataSources: SuggestionDataSource<T>[],
+): string {
     let result = '';
     iterateMentionsMarkup(
         value,
-        config,
+        dataSources,
         (_match, _index, _plainTextIndex, _id, display) => {
             result += display;
         },
@@ -181,21 +185,6 @@ export function getPlainText(value: string, config: MentionConfig[]): string {
         },
     );
     return result;
-}
-
-/**
- * Returns an array of MentionConfig objects parsed from the given children.
- * @param children The children to pull the MentionConfigs from.
- * @returns An array of MentionConfig objects.
- */
-export function readConfigFromChildren(children: DataSource[]): MentionConfig[] {
-    return children.map((child) => {
-        return {
-            markup: child.markup,
-            regex: child.regex ? verifyCapturingGroups(child.regex, child.markup) : markupToRegex(child.markup),
-            displayTransform: child.displayTransform || ((id: string, display: string) => display || id),
-        };
-    });
 }
 
 /**
@@ -243,9 +232,6 @@ const markupToRegex = (markup: string) => {
  */
 const escapeRegex = (str: string) => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 
-// Applies a change from the plain text textarea to the underlying marked up value
-// guided by the textarea text selection ranges before and after the change
-
 /**
  * Applies changes from the given plain text value to the given markup value, guided
  * by the selected text ranges before and after the change.
@@ -254,20 +240,20 @@ const escapeRegex = (str: string) => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\
  * @param selectionStartBefore The start of the selected text range before the change.
  * @param selectionEndBefore The end of the selected text range before the change.
  * @param selectionEndAfter The end of the selected text range after the change.
- * @param config An array of MentionConfigs to apply.
+ * @param dataSources An array of DataSources used in the markup string.
  * @returns
  */
-export function applyChangeToValue(
+export function applyChangeToValue<T extends BaseSuggestionData>(
     value: string,
     plainTextValue: string,
     selectionStartBefore: number | null,
     selectionEndBefore: number | null,
     selectionEndAfter: number,
-    config: MentionConfig[],
+    dataSources: SuggestionDataSource<T>[],
 ) {
-    let oldPlainTextValue = getPlainText(value, config);
+    const oldPlainTextValue = getPlainText(value, dataSources);
 
-    let lengthDelta = oldPlainTextValue.length - plainTextValue.length;
+    const lengthDelta = oldPlainTextValue.length - plainTextValue.length;
     if (selectionStartBefore === null) {
         selectionStartBefore = selectionEndAfter + lengthDelta;
     }
@@ -297,18 +283,18 @@ export function applyChangeToValue(
         spliceEnd = Math.max(selectionEndBefore, selectionStartBefore + lengthDelta);
     }
 
-    let mappedSpliceStart = mapPlainTextIndex(value, config, spliceStart, 'START');
-    let mappedSpliceEnd = mapPlainTextIndex(value, config, spliceEnd, 'END');
+    let mappedSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'START');
+    let mappedSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'END');
 
-    let controlSpliceStart = mapPlainTextIndex(value, config, spliceStart, 'NULL');
-    let controlSpliceEnd = mapPlainTextIndex(value, config, spliceEnd, 'NULL');
-    let willRemoveMention = controlSpliceStart === null || controlSpliceEnd === null;
+    const controlSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'NULL');
+    const controlSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'NULL');
+    const willRemoveMention = controlSpliceStart === null || controlSpliceEnd === null;
 
     let newValue = spliceString(value, mappedSpliceStart || 0, mappedSpliceEnd || 0, insert);
 
     if (!willRemoveMention) {
         // test for auto-completion changes
-        let controlPlainTextValue = getPlainText(newValue, config);
+        const controlPlainTextValue = getPlainText(newValue, dataSources);
         if (controlPlainTextValue !== plainTextValue) {
             // some auto-correction is going on
 
@@ -323,8 +309,8 @@ export function applyChangeToValue(
             spliceEnd = oldPlainTextValue.lastIndexOf(plainTextValue.substring(selectionEndAfter));
 
             // re-map the corrected indices
-            mappedSpliceStart = mapPlainTextIndex(value, config, spliceStart, 'START');
-            mappedSpliceEnd = mapPlainTextIndex(value, config, spliceEnd, 'END');
+            mappedSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'START');
+            mappedSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'END');
             newValue = spliceString(value, mappedSpliceStart || 0, mappedSpliceEnd || 0, insert);
         }
     }
@@ -335,7 +321,7 @@ export function applyChangeToValue(
 /**
  * Converts a plain text character index to the corresponding index in the markup value string.
  * @param value The markup value string.
- * @param config An array of all MentionConfigs.
+ * @param dataSources An array of all DataSources used in the markup string.
  * @param indexInPlainText The index in the plain text string.
  * @param inMarkupCorrection The behavior if the corresponding index is inside a mention.
  *   START returns the index of the mention markup's first character (default).
@@ -343,9 +329,9 @@ export function applyChangeToValue(
  *   NULL returns null.
  * @returns The index in the markup string.
  */
-export function mapPlainTextIndex(
+export function mapPlainTextIndex<T extends BaseSuggestionData>(
     value: string,
-    config: MentionConfig[],
+    dataSources: SuggestionDataSource<T>[],
     indexInPlainText: number,
     inMarkupCorrection: 'START' | 'END' | 'NULL' = 'START',
 ): number | null | undefined {
@@ -376,7 +362,7 @@ export function mapPlainTextIndex(
         if (mentionPlainTextIndex + display.length > indexInPlainText) {
             // found the corresponding position inside current match,
             // return the index of the first or after the last char of the matching markup
-            // depending on whether the `inMarkupCorrection`
+            // depending on the value of `inMarkupCorrection`
             if (inMarkupCorrection === 'NULL') {
                 result = null;
             } else {
@@ -385,9 +371,9 @@ export function mapPlainTextIndex(
         }
     };
 
-    iterateMentionsMarkup(value, config, markupProcessor, plainTextProcessor);
+    iterateMentionsMarkup(value, dataSources, markupProcessor, plainTextProcessor);
 
-    // when a mention is at the end of the value and we want to get the caret position
+    // when a mention is at the end of the value and we want to get the cursor position
     // at the end of the string, result is undefined
     return result === undefined ? value.length : result;
 }
@@ -409,13 +395,13 @@ export function spliceString(str: string, start: number, end: number, insert: st
  * of the mention in the plain text. If the given index is not inside a mention, undefined is
  * returned.
  * @param value The markup value string.
- * @param config An array of MentionConfigs.
+ * @param dataSources An array of DataSources used in the markup string.
  * @param indexInPlainText The index of the mention in plain text.
  * @returns The start of the index in the plain text.
  */
-export function findStartOfMentionInPlainText(
+export function findStartOfMentionInPlainText<T extends BaseSuggestionData>(
     value: string,
-    config: MentionConfig[],
+    dataSources: SuggestionDataSource<T>[],
     indexInPlainText: number,
 ): number | undefined {
     let result: number | undefined = undefined;
@@ -432,7 +418,7 @@ export function findStartOfMentionInPlainText(
         }
     };
 
-    iterateMentionsMarkup(value, config, markupProcessor);
+    iterateMentionsMarkup(value, dataSources, markupProcessor);
     return result;
 }
 
@@ -447,12 +433,15 @@ export interface MentionData {
 /**
  * Parses a list of mentions from the given markup string.
  * @param value The markup string value to parse.
- * @param config An array of MentionConfigs.
+ * @param dataSources An array of SuggestionDataSources used in the markup string.
  * @returns An array of MentionDatas parsed from the given markup string.
  */
-export function getMentions(value: string, config: MentionConfig[]): MentionData[] {
+export function getMentions<T extends BaseSuggestionData>(
+    value: string,
+    dataSources: SuggestionDataSource<T>[],
+): MentionData[] {
     const mentions: MentionData[] = [];
-    iterateMentionsMarkup(value, config, (_match, index, plainTextIndex, id, display, childIndex) => {
+    iterateMentionsMarkup(value, dataSources, (_match, index, plainTextIndex, id, display, childIndex) => {
         mentions.push({
             id,
             display,
@@ -464,23 +453,26 @@ export function getMentions(value: string, config: MentionConfig[]): MentionData
     return mentions;
 }
 
-// TODO: type this better
-export function countSuggestions(suggestions: object) {
+/**
+ * Returns the number of individual SuggestionData objects in the provided suggestions map.
+ * @param suggestions The suggestions map to count.
+ * @returns The number of SuggestionData objects in suggestions.
+ */
+export function countSuggestions<T extends BaseSuggestionData>(suggestions: SuggestionsMap<T>) {
     return Object.values(suggestions).reduce((acc, { results }) => acc + results.length, 0);
-}
-
-export function isHTMLTextAreaElement(obj: any): obj is HTMLTextAreaElement {
-    return Boolean(obj.createTextRange);
 }
 
 /**
  * Returns the index of the end of the last mention in the given markup string.
  * @param value The markup string to search for mentions.
- * @param config An array of MentionConfigs.
+ * @param dataSources An array of SuggestionDataSources used in the markup string.
  * @returns The index of the end of the last mention, or 0 if there are no mentions.
  */
-export function getEndOfLastMention(value: string, config: MentionConfig[]) {
-    const mentions = getMentions(value, config);
+export function getEndOfLastMention<T extends BaseSuggestionData>(
+    value: string,
+    dataSources: SuggestionDataSource<T>[],
+) {
+    const mentions = getMentions(value, dataSources);
     const lastMention = mentions[mentions.length - 1];
     return lastMention ? lastMention.plainTextIndex + lastMention.display.length : 0;
 }
@@ -505,7 +497,16 @@ export function makeTriggerRegex(trigger: string | RegExp, allowSpaceInQuery?: b
     }
 }
 
-export function getDataProvider(data: Array<Data> | (() => Array<Data>), ignoreAccents?: boolean) {
+/**
+ * Returns a data provider for the given data.
+ * @param data An array of SuggestionData objects, or a function that returns an array of SuggestionData objects.
+ * @param ignoreAccents Whether to ignore accents while comparing the data with the query.
+ * @returns A function which returns an array of SuggestionData objects based on a query string.
+ */
+export function getDataProvider<T extends BaseSuggestionData>(
+    data: SuggestionData<T>[] | ((query: string) => SuggestionData<T>[]),
+    ignoreAccents?: boolean,
+): (query: string) => SuggestionData<T>[] {
     if (data instanceof Array) {
         // if data is an array, create a function to query that
         return function (query: string) {
@@ -518,12 +519,17 @@ export function getDataProvider(data: Array<Data> | (() => Array<Data>), ignoreA
             }
             return results;
         };
-    } else {
-        // expect data to be a query function
-        return data;
     }
+    return data;
 }
 
+/**
+ * Returns the index of substr in str, optionally normalizing accents.
+ * @param str The string to check.
+ * @param substr The substring to search for.
+ * @param ignoreAccents Whether to ignore accents and other diacritical marks.
+ * @returns The index of substr in str.
+ */
 const getSubstringIndex = (str: string, substr: string, ignoreAccents?: boolean) => {
     if (!ignoreAccents) {
         return str.toLowerCase().indexOf(substr.toLowerCase());
@@ -532,6 +538,11 @@ const getSubstringIndex = (str: string, substr: string, ignoreAccents?: boolean)
     return normalizeString(str).indexOf(normalizeString(substr));
 };
 
+/**
+ * Returns the given string with accented characters replaced by their non-accented counterparts.
+ * @param str The string to remove accents from.
+ * @returns The given string with accents replaced.
+ */
 const removeAccents = (str: string) => {
     let formattedStr = str;
 
@@ -542,8 +553,20 @@ const removeAccents = (str: string) => {
     return formattedStr;
 };
 
-export const normalizeString = (str: string) => removeAccents(str).toLowerCase();
+/**
+ * Returns the given string with accents removed and converted to lowercase.
+ * @param str The string to normalize.
+ * @returns The normalized string.
+ */
+const normalizeString = (str: string) => removeAccents(str).toLowerCase();
 
-export const makeMentionsMarkup = (markup: string, id: string, display: string) => {
-    return markup.replace(Placeholders.id, id).replace(Placeholders.display, display);
+/**
+ *
+ * @param markup The markup format to use.
+ * @param id The id of the mention.
+ * @param display The display string of the mention.
+ * @returns The markup string for the mention.
+ */
+export const makeMentionsMarkup = (markup: string, id: string, display?: string) => {
+    return markup.replace(Placeholders.id, id).replace(Placeholders.display, display || id);
 };
