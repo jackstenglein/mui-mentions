@@ -1,5 +1,5 @@
 import { Box, InputBaseComponentProps, OutlinedInput } from '@mui/material';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, forwardRef } from 'react';
 import Mention from './Mention';
 import { BaseSuggestionData, SuggestionDataSource } from './types';
 import { iterateMentionsMarkup } from './utils/utils';
@@ -24,7 +24,10 @@ interface HighlighterProps<T extends BaseSuggestionData> {
     dataSources: SuggestionDataSource<T>[];
 }
 
-function InternalHighlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): ReactNode {
+const InternalHighlighter = forwardRef(function InternalHighlighter<T extends BaseSuggestionData>(
+    props: HighlighterProps<T>,
+    _ref: any,
+): ReactNode {
     const { containerRef, cursorRef, selectionEnd, selectionStart, value, dataSources } = props;
     const components: JSX.Element[] = [];
 
@@ -82,12 +85,12 @@ function InternalHighlighter<T extends BaseSuggestionData>(props: HighlighterPro
             </Box>
         </Box>
     );
-}
+});
 
 function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>) {
     return (
         <OutlinedInput
-            inputComponent={InternalHighlighter as React.ElementType<InputBaseComponentProps>}
+            inputComponent={InternalHighlighter as unknown as React.ElementType<InputBaseComponentProps>}
             inputProps={props}
             sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             multiline
