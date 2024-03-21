@@ -1,0 +1,30 @@
+name: build
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Run "node -v" to check the latest version
+          node-version: 18.x
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish
+        run: npm publish
+
+        env:
+          # We need this to our NPM account
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

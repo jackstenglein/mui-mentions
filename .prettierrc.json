@@ -7,5 +7,13 @@
     "printWidth": 120,
     "jsxSingleQuote": true,
     "endOfLine": "auto",
-    "plugins": ["prettier-plugin-organize-imports"]
+    "plugins": ["prettier-plugin-organize-imports"],
+    "overrides": [
+        {
+            "files": "*.yml",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
 }
