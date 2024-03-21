@@ -46,6 +46,8 @@ const App = () => {
                             { id: '25', display: 'Test 2' },
                         ],
                         allowSpaceInQuery: false,
+                        appendSpaceOnAdd: true,
+                        displayTransform: (_id, display) => `@${display}`,
                     },
                 ]}
             />

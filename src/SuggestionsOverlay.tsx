@@ -58,15 +58,15 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
     useEffect(() => {
         const current = ulElement.current;
         if (!scrollFocusedIntoView || !current) {
-            console.log('Returning early');
-            console.log('ScrollFocusedIntoView: ', scrollFocusedIntoView);
-            console.log('Current: ', current);
-            console.log('Current.offsetHeight: ', current?.offsetHeight);
-            console.log('Current.scrollHeight: ', current?.scrollHeight);
+            // console.log('Returning early');
+            // console.log('ScrollFocusedIntoView: ', scrollFocusedIntoView);
+            // console.log('Current: ', current);
+            // console.log('Current.offsetHeight: ', current?.offsetHeight);
+            // console.log('Current.scrollHeight: ', current?.scrollHeight);
             return;
         }
 
-        console.log('Scrolling into view');
+        // console.log('Scrolling into view');
 
         const scrollTop = current.scrollTop;
 
@@ -118,8 +118,6 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
     );
 
     useEffect(() => {
-        console.log('Use effect firing');
-
         setSuggestions({});
 
         if (!selectionStart || selectionStart !== selectionEnd) {

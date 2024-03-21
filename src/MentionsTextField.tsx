@@ -73,6 +73,14 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         return () => input?.removeEventListener('scroll', onScroll);
     }, [inputElement, highlighterElement]);
 
+    useEffect(() => {
+        const input = inputElement.current;
+        if (!input || (input.selectionStart === selectionStart && input.selectionEnd === selectionEnd)) {
+            return;
+        }
+        input.setSelectionRange(selectionStart, selectionEnd);
+    }, [selectionStart, selectionEnd, inputElement]);
+
     const handleBlur = () => {
         if (!suggestionsMouseDown.current) {
             setSelectionStart(null);
@@ -101,7 +109,6 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         const end = start + querySequenceEnd - querySequenceStart;
 
         let insert = makeMentionsMarkup(markup || DefaultMarkupTemplate, suggestion.id, suggestion.display);
-        const newValue = spliceString(props.value, start, end, insert);
         let displayValue = (displayTransform || DefaultDisplayTransform)(suggestion.id, suggestion.display);
 
         if (appendSpaceOnAdd) {
@@ -113,10 +120,8 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         setSelectionStart(newCaretPosition);
         setSelectionEnd(newCaretPosition);
 
-        // Refocus input and set caret position to end of mention
-        // inputElement.current?.focus();
-
         // Propagate change
+        const newValue = spliceString(props.value, start, end, insert);
         const mentions = getMentions(newValue, props.dataSources);
         const newPlainTextValue = spliceString(plainTextValue, querySequenceStart, querySequenceEnd, displayValue);
 
@@ -158,13 +163,12 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
         // Adjust selection range in case a mention will be deleted by the characters outside of the
         // selection range that are automatically deleted
-        const startOfMention = findStartOfMentionInPlainText(value, props.dataSources, selectionStart || 0);
-
+        const startOfMention = findStartOfMentionInPlainText(value, props.dataSources, ev.target.selectionStart || 0);
         if (startOfMention !== undefined && selectionEndAfter !== null && selectionEndAfter > startOfMention) {
             // only if a deletion has taken place
             const data = (ev.nativeEvent as any).data;
             selectionStartAfter = startOfMention + (data ? data.length : 0);
-            selectionEndAfter = selectionStart;
+            selectionEndAfter = selectionStartAfter;
         }
 
         setSelectionStart(selectionStartAfter);
