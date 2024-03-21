@@ -58,15 +58,8 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
     useEffect(() => {
         const current = ulElement.current;
         if (!scrollFocusedIntoView || !current) {
-            // console.log('Returning early');
-            // console.log('ScrollFocusedIntoView: ', scrollFocusedIntoView);
-            // console.log('Current: ', current);
-            // console.log('Current.offsetHeight: ', current?.offsetHeight);
-            // console.log('Current.scrollHeight: ', current?.scrollHeight);
             return;
         }
-
-        // console.log('Scrolling into view');
 
         const scrollTop = current.scrollTop;
 
@@ -76,8 +69,10 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
         bottom = bottom - topContainer + scrollTop;
 
         if (top < scrollTop) {
+            // Handles scrolling up as focusIndex decreases
             current.scrollTop = top;
-        } else if (bottom > current.offsetHeight) {
+        } else if (bottom > current.offsetHeight + scrollTop) {
+            // Handles scrolling down as focusIndex increases
             current.scrollTop = bottom - current.offsetHeight;
         }
 
@@ -224,7 +219,9 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
             />
             <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' disablePortal>
                 <Paper elevation={8} onMouseDown={onMouseDown}>
-                    <List ref={ulElement}>{renderedSuggestions}</List>
+                    <List ref={ulElement} sx={{ width: '300px', maxHeight: '40vh', overflow: 'auto' }}>
+                        {renderedSuggestions}
+                    </List>
                 </Paper>
             </Popper>
         </>
