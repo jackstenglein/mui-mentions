@@ -217,7 +217,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                 setFocusIndex={setFocusIndex}
                 setScrollFocusedIntoView={setScrollFocusedIntoView}
             />
-            <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' disablePortal>
+            <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' sx={{ zIndex: 2 }}>
                 <Paper elevation={8} onMouseDown={onMouseDown}>
                     <List ref={ulElement} sx={{ width: '300px', maxHeight: '40vh', overflow: 'auto' }}>
                         {renderedSuggestions}

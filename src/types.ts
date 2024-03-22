@@ -122,3 +122,21 @@ export interface SuggestionsQueryInfo {
 export interface SuggestionsMap<T extends BaseSuggestionData> {
     [index: number]: Suggestions<T>;
 }
+
+/** A mention in the textfield. */
+export interface MentionData {
+    /** The id of the mention. */
+    id: string;
+
+    /** The display string of the mention. */
+    display: string;
+
+    /** The index of the data source for the mention. */
+    dataSourceIndex: number;
+
+    /** The index of the mention in the markup string. */
+    index: number;
+
+    /** The index of the mention in the plain text string. */
+    plainTextIndex: number;
+}

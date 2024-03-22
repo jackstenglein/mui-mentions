@@ -1,15 +1,18 @@
-import { Box, InputBaseComponentProps, OutlinedInput } from '@mui/material';
-import React, { ReactNode, forwardRef } from 'react';
+import { Box, Portal } from '@mui/material';
+import React, { ReactNode } from 'react';
 import Mention from './Mention';
 import { BaseSuggestionData, SuggestionDataSource } from './types';
 import { iterateMentionsMarkup } from './utils/utils';
 
 interface HighlighterProps<T extends BaseSuggestionData> {
     /** Ref applied to the main container of the highlighter. */
-    containerRef: React.RefObject<HTMLDivElement>;
+    highlighterRef: React.RefObject<HTMLDivElement>;
 
     /** Ref applied to the element which keeps track of the cursor position. */
     cursorRef: React.RefObject<HTMLSpanElement>;
+
+    /** Ref of the input field. */
+    inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>;
 
     /** The start of the selected text range in the plain text value. */
     selectionStart: number | null;
@@ -22,13 +25,13 @@ interface HighlighterProps<T extends BaseSuggestionData> {
 
     /** The suggestion data sources used in the makup string. */
     dataSources: SuggestionDataSource<T>[];
+
+    /** Whether the input is multiline. */
+    multiline?: boolean;
 }
 
-const InternalHighlighter = forwardRef(function InternalHighlighter<T extends BaseSuggestionData>(
-    props: HighlighterProps<T>,
-    _ref: any,
-): ReactNode {
-    const { containerRef, cursorRef, selectionEnd, selectionStart, value, dataSources } = props;
+function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): ReactNode {
+    const { highlighterRef, cursorRef, selectionEnd, selectionStart, value, dataSources, multiline } = props;
     const components: JSX.Element[] = [];
 
     const handleMention = (_markup: string, index: number, _plainTextIndex: number, id: string, display: string) => {
@@ -36,12 +39,23 @@ const InternalHighlighter = forwardRef(function InternalHighlighter<T extends Ba
     };
 
     const handlePlainText = (text: string, index: number, indexInPlaintext: number) => {
-        if (
+        if (!multiline) {
+            text = text.replaceAll('\n', '');
+        }
+
+        const renderCursor =
             selectionStart &&
             selectionStart === selectionEnd &&
             selectionStart >= indexInPlaintext &&
-            selectionStart <= indexInPlaintext + text.length
-        ) {
+            selectionStart <= indexInPlaintext + text.length;
+
+        if (!renderCursor) {
+            components.push(
+                <Box key={`${index}-${indexInPlaintext}`} component='span' visibility='hidden'>
+                    {text}
+                </Box>,
+            );
+        } else {
             const splitIndex = selectionStart - indexInPlaintext;
             const startText = text.substring(0, splitIndex);
             const endText = text.substring(splitIndex);
@@ -49,7 +63,7 @@ const InternalHighlighter = forwardRef(function InternalHighlighter<T extends Ba
             if (startText) {
                 components.push(
                     <Box key={`${index}-${indexInPlaintext}-precursor`} component='span' visibility='hidden'>
-                        {text.substring(0, splitIndex)}
+                        {startText}
                     </Box>,
                 );
             }
@@ -59,46 +73,69 @@ const InternalHighlighter = forwardRef(function InternalHighlighter<T extends Ba
             if (endText) {
                 components.push(
                     <Box key={`${index}-${indexInPlaintext}-postcursor`} component='span' visibility='hidden'>
-                        {text.substring(splitIndex)}
+                        {endText}
                     </Box>,
                 );
             }
-        } else {
-            components.push(
-                <Box key={`${index}-${indexInPlaintext}`} component='span' visibility='hidden'>
-                    {text}
-                </Box>,
-            );
         }
     };
 
     iterateMentionsMarkup(value, dataSources, handleMention, handlePlainText);
 
-    return (
-        <Box
-            ref={containerRef}
-            sx={{ height: 1, width: 1, whiteSpace: 'pre-wrap', overflow: 'hidden', overscrollBehavior: 'none' }}
-        >
-            {components}
-            <Box component='span' visibility='hidden'>
-                .
-            </Box>
-        </Box>
-    );
-});
+    const rect = getHighlighterRect(props.inputRef.current);
 
-function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>) {
     return (
-        <OutlinedInput
-            inputComponent={InternalHighlighter as unknown as React.ElementType<InputBaseComponentProps>}
-            inputProps={props}
-            sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            multiline
-            fullWidth
-            minRows={3}
-            maxRows={7}
-        ></OutlinedInput>
+        <Portal container={() => props.inputRef.current?.parentElement || null}>
+            <Box
+                ref={highlighterRef}
+                sx={{
+                    position: 'absolute',
+                    top: `${rect.y}px`,
+                    left: `${rect.x}px`,
+                    width: `${rect.width}px`,
+                    height: `${rect.height}px`,
+                    whiteSpace: multiline ? 'pre-wrap' : 'pre',
+                    overflow: 'hidden',
+                    overscrollBehavior: 'none',
+                    zIndex: -1,
+                }}
+            >
+                {components}
+                <Box component='span' visibility='hidden'>
+                    .
+                </Box>
+            </Box>
+        </Portal>
     );
 }
 
 export default Highlighter;
+
+/**
+ * Gets the highlighter rectangle (x, y, width, height) for the provided input element.
+ * @param input The input element to overlay.
+ * @returns The highlighter rectangle.
+ */
+function getHighlighterRect(input?: HTMLInputElement | HTMLTextAreaElement | null) {
+    const rec = { x: 0, y: 0, width: 0, height: 0 };
+    if (!input) {
+        return rec;
+    }
+
+    const computedStyle = getComputedStyle(input);
+    rec.width = input.clientWidth;
+    rec.width -= parseFloat(computedStyle.paddingLeft);
+    rec.width -= parseFloat(computedStyle.paddingRight);
+    rec.height = input.clientHeight;
+    rec.height -= parseFloat(computedStyle.paddingTop);
+    rec.height -= parseFloat(computedStyle.paddingBottom);
+
+    rec.x = input.offsetLeft;
+    rec.x += parseFloat(computedStyle.paddingLeft);
+    rec.x += parseFloat(computedStyle.borderLeft);
+    rec.y = input.offsetTop;
+    rec.y += parseFloat(computedStyle.paddingTop);
+    rec.y += parseFloat(computedStyle.borderTop);
+
+    return rec;
+}

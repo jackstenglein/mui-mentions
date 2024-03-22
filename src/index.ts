@@ -1,3 +1,11 @@
-import MentionsTextField from './MentionsTextField';
+import MentionsTextField, { MentionsTextFieldProps } from './MentionsTextField';
+import { BaseSuggestionData, MentionData, SuggestionData, SuggestionDataSource } from './types';
 
-export { MentionsTextField };
+export {
+    BaseSuggestionData,
+    MentionData,
+    MentionsTextField,
+    MentionsTextFieldProps,
+    SuggestionData,
+    SuggestionDataSource,
+};

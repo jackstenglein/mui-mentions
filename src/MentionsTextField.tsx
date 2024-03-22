@@ -6,12 +6,12 @@ import {
     BaseSuggestionData,
     DefaultDisplayTransform,
     DefaultMarkupTemplate,
+    MentionData,
     SuggestionData,
     SuggestionDataSource,
     SuggestionsQueryInfo,
 } from './types';
 import {
-    MentionData,
     applyChangeToValue,
     findStartOfMentionInPlainText,
     getMentions,
@@ -44,42 +44,41 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
     dataSources: SuggestionDataSource<T>[];
 }
 
-type MentionsTextFieldProps<T extends BaseSuggestionData, Variant extends TextFieldVariants = TextFieldVariants> = Omit<
-    TextFieldProps<Variant>,
-    'onChange'
-> &
-    MentionsTextFieldBaseProps<T>;
+export type MentionsTextFieldProps<
+    T extends BaseSuggestionData,
+    Variant extends TextFieldVariants = TextFieldVariants,
+> = Omit<TextFieldProps<Variant>, 'onChange'> & MentionsTextFieldBaseProps<T>;
 
 function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFieldProps<T>): ReactNode {
-    const inputElement = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-    const highlighterElement = useRef<HTMLDivElement>(null);
-    const cursorElement = useRef<HTMLSpanElement>(null);
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+    const highlighterRef = useRef<HTMLDivElement>(null);
+    const cursorRef = useRef<HTMLSpanElement>(null);
     const suggestionsMouseDown = useRef(false);
 
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
 
     useEffect(() => {
-        const input = inputElement.current;
+        const input = inputRef.current;
         const onScroll = () => {
-            if (!highlighterElement.current || !input) {
+            if (!highlighterRef.current || !input) {
                 return;
             }
-            highlighterElement.current.scrollLeft = input.scrollLeft;
-            highlighterElement.current.scrollTop = input.scrollTop;
+            highlighterRef.current.scrollLeft = input.scrollLeft;
+            highlighterRef.current.scrollTop = input.scrollTop;
         };
 
         input?.addEventListener('scroll', onScroll);
         return () => input?.removeEventListener('scroll', onScroll);
-    }, [inputElement, highlighterElement]);
+    }, [inputRef, highlighterRef]);
 
     useEffect(() => {
-        const input = inputElement.current;
+        const input = inputRef.current;
         if (!input || (input.selectionStart === selectionStart && input.selectionEnd === selectionEnd)) {
             return;
         }
         input.setSelectionRange(selectionStart, selectionEnd);
-    }, [selectionStart, selectionEnd, inputElement]);
+    }, [selectionStart, selectionEnd, inputRef]);
 
     const handleBlur = () => {
         if (!suggestionsMouseDown.current) {
@@ -199,24 +198,26 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
     };
 
     return (
-        <Box sx={{ maxHeight: '600px' }}>
+        <Box>
             <Box id='mui-mentions-control' sx={{ position: 'relative' }}>
                 <Highlighter
-                    containerRef={highlighterElement}
-                    cursorRef={cursorElement}
+                    highlighterRef={highlighterRef}
+                    cursorRef={cursorRef}
                     selectionStart={selectionStart}
                     selectionEnd={selectionEnd}
                     value={value}
                     dataSources={dataSources}
+                    inputRef={inputRef}
+                    multiline={inputProps.multiline}
                 />
-                <TextField inputRef={inputElement} {...inputProps} />
+                <TextField inputRef={inputRef} {...inputProps} />
             </Box>
             <SuggestionsOverlay
                 value={props.value}
                 dataSources={props.dataSources}
                 selectionStart={selectionStart}
                 selectionEnd={selectionEnd}
-                cursorRef={cursorElement}
+                cursorRef={cursorRef}
                 loading={false}
                 onSelect={addMention}
                 onMouseDown={handleSuggestionsMouseDown}

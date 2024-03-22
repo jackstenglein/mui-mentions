@@ -3,6 +3,7 @@ import {
     BaseSuggestionData,
     DefaultDisplayTransform,
     DefaultMarkupTemplate,
+    MentionData,
     SuggestionData,
     SuggestionDataSource,
     SuggestionsMap,
@@ -422,14 +423,6 @@ export function findStartOfMentionInPlainText<T extends BaseSuggestionData>(
     return result;
 }
 
-export interface MentionData {
-    id: string;
-    display: string;
-    childIndex: number;
-    index: number;
-    plainTextIndex: number;
-}
-
 /**
  * Parses a list of mentions from the given markup string.
  * @param value The markup string value to parse.
@@ -445,7 +438,7 @@ export function getMentions<T extends BaseSuggestionData>(
         mentions.push({
             id,
             display,
-            childIndex,
+            dataSourceIndex: childIndex,
             index,
             plainTextIndex,
         });
