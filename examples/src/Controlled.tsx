@@ -11,8 +11,8 @@ export const Controlled = () => {
             <Stack spacing={0.5}>
                 <Typography variant='h5'>Uncontrolled vs Controlled</Typography>
                 <Typography>
-                    The component can be controlled or uncontrolled. If controlled, the MentionsTextField's onChange
-                    function has a different signature than the base Mui TextField's:
+                    The component can be controlled or uncontrolled. If controlled, the MentionsTextField onChange
+                    function has a different signature than the base Mui TextField:
                     {` (newValue: string, newPlainText: string, mentions: MentionData[]) => void;`}
                 </Typography>
             </Stack>
