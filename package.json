@@ -33,6 +33,7 @@
     "devDependencies": {
         "@emotion/react": "^11.11.4",
         "@emotion/styled": "^11.11.0",
+        "@mui/icons-material": "^5.15.14",
         "@mui/material": "^5.15.13",
         "@testing-library/react": "^14.2.1",
         "@types/invariant": "^2.2.37",
