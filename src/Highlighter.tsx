@@ -12,7 +12,7 @@ interface HighlighterProps<T extends BaseSuggestionData> {
     cursorRef: React.RefObject<HTMLSpanElement>;
 
     /** Ref of the input field. */
-    inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>;
+    inputRef: HTMLInputElement | HTMLTextAreaElement | null;
 
     /** The start of the selected text range in the plain text value. */
     selectionStart: number | null;
@@ -28,6 +28,9 @@ interface HighlighterProps<T extends BaseSuggestionData> {
 
     /** Whether the input is multiline. */
     multiline?: boolean;
+
+    /** The color of the highlight. */
+    color?: string;
 }
 
 function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): ReactNode {
@@ -35,7 +38,7 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
     const components: JSX.Element[] = [];
 
     const handleMention = (_markup: string, index: number, _plainTextIndex: number, id: string, display: string) => {
-        components.push(<Mention key={`${id}-${index}`} display={display} />);
+        components.push(<Mention key={`${id}-${index}`} display={display} color={props.color} />);
     };
 
     const handlePlainText = (text: string, index: number, indexInPlaintext: number) => {
@@ -82,10 +85,10 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
 
     iterateMentionsMarkup(value, dataSources, handleMention, handlePlainText);
 
-    const rect = getHighlighterRect(props.inputRef.current);
+    const rect = getHighlighterRect(props.inputRef);
 
     return (
-        <Portal container={() => props.inputRef.current?.parentElement || null}>
+        <Portal container={() => props.inputRef?.parentElement || null}>
             <Box
                 ref={highlighterRef}
                 sx={{

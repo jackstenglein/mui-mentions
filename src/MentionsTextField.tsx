@@ -1,4 +1,4 @@
-import { Box, TextField, TextFieldProps, TextFieldVariants } from '@mui/material';
+import { TextField, TextFieldProps, TextFieldVariants } from '@mui/material';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import Highlighter from './Highlighter';
 import SuggestionsOverlay from './SuggestionsOverlay';
@@ -27,7 +27,10 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      * The current value of the TextField, potentially containing mention
      * markup.
      */
-    value: string;
+    value?: string;
+
+    /** The default value. Use when the component is not controlled. */
+    defaultValue?: string;
 
     /**
      * Callback invoked as the value of the TextField changes.
@@ -36,21 +39,29 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      *   mention markup converted to display strings.
      * @param mentions A list of mentions in the TextField.
      */
-    onChange: (newValue: string, newPlainText: string, mentions: MentionData[]) => void;
+    onChange?: (newValue: string, newPlainText: string, mentions: MentionData[]) => void;
 
     /**
      * A list of data sources used to populate the suggestions overlay.
      */
     dataSources: SuggestionDataSource<T>[];
+
+    /**
+     * The color of the mention highlights.
+     * @default 'primary.light'
+     */
+    highlightColor?: string;
 }
 
 export type MentionsTextFieldProps<
     T extends BaseSuggestionData,
     Variant extends TextFieldVariants = TextFieldVariants,
-> = Omit<TextFieldProps<Variant>, 'onChange'> & MentionsTextFieldBaseProps<T>;
+> = Omit<TextFieldProps<Variant>, 'onChange' | 'defaultValue'> & MentionsTextFieldBaseProps<T>;
 
 function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFieldProps<T>): ReactNode {
-    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+    const [stateValue, setStateValue] = useState<string>(props.defaultValue || '');
+
+    const [inputRef, setInputRef] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
     const highlighterRef = useRef<HTMLDivElement>(null);
     const cursorRef = useRef<HTMLSpanElement>(null);
     const suggestionsMouseDown = useRef(false);
@@ -59,7 +70,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
     const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
 
     useEffect(() => {
-        const input = inputRef.current;
+        const input = inputRef;
         const onScroll = () => {
             if (!highlighterRef.current || !input) {
                 return;
@@ -73,15 +84,19 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
     }, [inputRef, highlighterRef]);
 
     useEffect(() => {
-        const input = inputRef.current;
+        const input = inputRef;
         if (!input || (input.selectionStart === selectionStart && input.selectionEnd === selectionEnd)) {
             return;
         }
         input.setSelectionRange(selectionStart, selectionEnd);
     }, [selectionStart, selectionEnd, inputRef]);
 
+    const { value, dataSources, highlightColor, ...others } = props;
+    const finalValue = value !== undefined ? value : stateValue;
+
     const handleBlur = () => {
         if (!suggestionsMouseDown.current) {
+            console.log('Removing selection start/end');
             setSelectionStart(null);
             setSelectionEnd(null);
         }
@@ -96,11 +111,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         suggestion: SuggestionData<T>,
         { childIndex, querySequenceStart, querySequenceEnd, plainTextValue }: SuggestionsQueryInfo,
     ) => {
-        const dataSource = props.dataSources[childIndex];
+        const dataSource = dataSources[childIndex];
 
         const { markup, displayTransform, appendSpaceOnAdd, onAdd } = dataSource;
 
-        const start = mapPlainTextIndex(props.value, props.dataSources, querySequenceStart, 'START');
+        const start = mapPlainTextIndex(finalValue, dataSources, querySequenceStart, 'START');
         if (!isNumber(start)) {
             return;
         }
@@ -120,17 +135,16 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         setSelectionEnd(newCaretPosition);
 
         // Propagate change
-        const newValue = spliceString(props.value, start, end, insert);
-        const mentions = getMentions(newValue, props.dataSources);
+        const newValue = spliceString(finalValue, start, end, insert);
+        const mentions = getMentions(newValue, dataSources);
         const newPlainTextValue = spliceString(plainTextValue, querySequenceStart, querySequenceEnd, displayValue);
 
-        props.onChange(newValue, newPlainTextValue, mentions);
+        const onChange = props.onChange || setStateValue;
+        onChange(newValue, newPlainTextValue, mentions);
         onAdd?.(suggestion, start, end);
     };
 
     const handleChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        const value = props.value || '';
-
         let newPlainTextValue = ev.target.value;
 
         let selectionStartBefore = selectionStart;
@@ -145,16 +159,16 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
         // Derive the new value to set by applying the local change in the textarea's plain text
         const newValue = applyChangeToValue(
-            value,
+            finalValue,
             newPlainTextValue,
             selectionStartBefore,
             selectionEndBefore,
             ev.target.selectionEnd || 0,
-            props.dataSources,
+            dataSources,
         );
 
         // In case a mention is deleted, also adjust the new plain text value
-        newPlainTextValue = getPlainText(newValue, props.dataSources);
+        newPlainTextValue = getPlainText(newValue, dataSources);
 
         // Save current selection after change to be able to restore caret position after rerendering
         let selectionStartAfter = ev.target.selectionStart;
@@ -162,7 +176,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
         // Adjust selection range in case a mention will be deleted by the characters outside of the
         // selection range that are automatically deleted
-        const startOfMention = findStartOfMentionInPlainText(value, props.dataSources, ev.target.selectionStart || 0);
+        const startOfMention = findStartOfMentionInPlainText(finalValue, dataSources, ev.target.selectionStart || 0);
         if (startOfMention !== undefined && selectionEndAfter !== null && selectionEndAfter > startOfMention) {
             // only if a deletion has taken place
             const data = (ev.nativeEvent as any).data;
@@ -173,10 +187,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         setSelectionStart(selectionStartAfter);
         setSelectionEnd(selectionEndAfter);
 
-        const mentions = getMentions(newValue, props.dataSources);
+        const mentions = getMentions(newValue, dataSources);
 
         // Propagate change
-        props.onChange(newValue, newPlainTextValue, mentions);
+        const onChange = props.onChange || setStateValue;
+        onChange(newValue, newPlainTextValue, mentions);
     };
 
     const handleSelect = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,10 +200,9 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         props.onSelect?.(ev);
     };
 
-    const { value, dataSources, ...others } = props;
     const inputProps: TextFieldProps = {
         ...others,
-        value: getPlainText(value, dataSources),
+        value: getPlainText(finalValue, dataSources),
         onChange: handleChange,
         onSelect: handleSelect,
         onBlur: handleBlur,
@@ -198,23 +212,22 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
     };
 
     return (
-        <Box>
-            <Box id='mui-mentions-control' sx={{ position: 'relative' }}>
-                <Highlighter
-                    highlighterRef={highlighterRef}
-                    cursorRef={cursorRef}
-                    selectionStart={selectionStart}
-                    selectionEnd={selectionEnd}
-                    value={value}
-                    dataSources={dataSources}
-                    inputRef={inputRef}
-                    multiline={inputProps.multiline}
-                />
-                <TextField inputRef={inputRef} {...inputProps} />
-            </Box>
+        <>
+            <Highlighter
+                highlighterRef={highlighterRef}
+                cursorRef={cursorRef}
+                selectionStart={selectionStart}
+                selectionEnd={selectionEnd}
+                value={finalValue}
+                dataSources={dataSources}
+                inputRef={inputRef}
+                multiline={inputProps.multiline}
+                color={highlightColor || props.color}
+            />
+            <TextField inputRef={(ref) => setInputRef(ref)} {...inputProps} />
             <SuggestionsOverlay
-                value={props.value}
-                dataSources={props.dataSources}
+                value={finalValue}
+                dataSources={dataSources}
                 selectionStart={selectionStart}
                 selectionEnd={selectionEnd}
                 cursorRef={cursorRef}
@@ -222,7 +235,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 onSelect={addMention}
                 onMouseDown={handleSuggestionsMouseDown}
             />
-        </Box>
+        </>
     );
 }
 

@@ -1,14 +1,42 @@
-import { Stack } from '@mui/material';
-import React, { useState } from 'react';
+import { Container, Link, Stack, Typography } from '@mui/material';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MentionsTextField } from '../../src';
+import { Adornment } from './Adornment';
+import { Basic } from './Basic';
+import { Color } from './Color';
+import { Controlled } from './Controlled';
+import { Error } from './Error';
+import { FormProps } from './FormProps';
+import { FullWidth } from './FullWidth';
+import { Limitations } from './Limitations';
+import { Multiline } from './Multiline';
+import { Sizes } from './Sizes';
 
 const App = () => {
-    const [value, setValue] = useState('');
-
     return (
-        <Stack spacing={5}>
-            <MentionsTextField
+        <Container sx={{ py: 5 }}>
+            <Stack spacing={5}>
+                <Stack spacing={1}>
+                    <Typography variant='h4'>@jackstenglein/mui-mentions</Typography>
+                    <Typography>
+                        Mention people in a{' '}
+                        <Link href='https://mui.com/material-ui/react-text-field/'>MUI TextField</Link>.
+                    </Typography>
+                </Stack>
+
+                <Basic />
+                <FormProps />
+                <Error />
+                <Multiline />
+                <Adornment />
+                <Sizes />
+                <FullWidth />
+                <Controlled />
+                <Color />
+
+                <Limitations />
+
+                {/* <MentionsTextField
                 variant='filled'
                 label='Test Filled'
                 value={value}
@@ -184,8 +212,9 @@ const App = () => {
                         displayTransform: (_id, display) => `@${display}`,
                     },
                 ]}
-            />
-        </Stack>
+            /> */}
+            </Stack>
+        </Container>
     );
 };
 
