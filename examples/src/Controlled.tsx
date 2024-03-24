@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import { MentionsTextField } from '../../src';
-import { users } from './data';
+import { stormlight } from './data';
 
 export const Controlled = () => {
     const [value, setValue] = useState('');
@@ -25,7 +25,7 @@ export const Controlled = () => {
                     onChange={(v) => setValue(v)}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                 />
@@ -35,7 +35,7 @@ export const Controlled = () => {
                     fullWidth
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                 />

@@ -492,17 +492,17 @@ export function makeTriggerRegex(trigger: string | RegExp, allowSpaceInQuery?: b
 
 /**
  * Returns a data provider for the given data.
- * @param data An array of SuggestionData objects, or a function that returns an array of SuggestionData objects.
+ * @param data An array of SuggestionData objects, or an asychronous function that returns an array of SuggestionData objects.
  * @param ignoreAccents Whether to ignore accents while comparing the data with the query.
  * @returns A function which returns an array of SuggestionData objects based on a query string.
  */
 export function getDataProvider<T extends BaseSuggestionData>(
-    data: SuggestionData<T>[] | ((query: string) => SuggestionData<T>[]),
+    data: SuggestionData<T>[] | ((query: string) => Promise<SuggestionData<T>[]>),
     ignoreAccents?: boolean,
-): (query: string) => SuggestionData<T>[] {
+): (query: string) => Promise<SuggestionData<T>[]> {
     if (data instanceof Array) {
         // if data is an array, create a function to query that
-        return function (query: string) {
+        return async function (query: string) {
             const results = [];
             for (let i = 0, l = data.length; i < l; ++i) {
                 const display = data[i].display || data[i].id;

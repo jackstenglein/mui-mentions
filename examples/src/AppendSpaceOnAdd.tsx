@@ -1,23 +1,23 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, stormlight } from './data';
+import { stormlight } from './data';
 
-export const FullWidth = () => {
+export const AppendSpaceOnAdd = () => {
     return (
         <Stack spacing={2.5}>
             <Stack spacing={0.5}>
-                <Typography variant='h5'>Full Width</Typography>
+                <Typography variant='h5'>Append Space on Add</Typography>
                 <Typography>
-                    The fullWidth prop can be used to make the input take up the full width of its container.
+                    Use the appendSpaceOnAdd field on the data source to automatically add a space after a mention is
+                    selected.
                 </Typography>
             </Stack>
 
-            <Stack spacing={2} alignItems='center'>
+            <Stack direction='row' spacing={2}>
                 <MentionsTextField
-                    label='Full Width'
+                    label='Default'
                     fullWidth
-                    defaultValue={defaultValue}
                     dataSources={[
                         {
                             data: stormlight,
@@ -26,11 +26,12 @@ export const FullWidth = () => {
                 />
 
                 <MentionsTextField
-                    label='Not Full Width'
-                    defaultValue={defaultValue}
+                    label='Append Space on Add'
+                    fullWidth
                     dataSources={[
                         {
                             data: stormlight,
+                            appendSpaceOnAdd: true,
                         },
                     ]}
                 />

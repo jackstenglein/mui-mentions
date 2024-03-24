@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, users } from './data';
+import { defaultValue, stormlight } from './data';
 
 export const Color = () => {
     return (
@@ -22,7 +22,7 @@ export const Color = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                     color='secondary'
@@ -36,7 +36,7 @@ export const Color = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                     color='success'
@@ -50,7 +50,7 @@ export const Color = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                     color='warning'
@@ -65,7 +65,7 @@ export const Color = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                     color='secondary'
@@ -80,7 +80,7 @@ export const Color = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                     color='success'
@@ -95,7 +95,7 @@ export const Color = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                     color='warning'

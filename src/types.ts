@@ -51,8 +51,11 @@ export interface SuggestionDataSource<T extends BaseSuggestionData> {
      */
     regex?: RegExp;
 
-    /** The suggestion data to display. */
-    data: SuggestionData<T>[];
+    /**
+     * The suggestion data to display or an asynchronous function which returns the suggestion
+     * data based on the search query.
+     */
+    data: SuggestionData<T>[] | ((query: string) => Promise<SuggestionData<T>[]>);
 
     /**
      * Whether to keep the suggestion overlay open when a space is typed.

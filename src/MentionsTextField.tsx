@@ -91,7 +91,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         input.setSelectionRange(selectionStart, selectionEnd);
     }, [selectionStart, selectionEnd, inputRef]);
 
-    const { value, dataSources, highlightColor, ...others } = props;
+    const { value, defaultValue, dataSources, highlightColor, ...others } = props;
     const finalValue = value !== undefined ? value : stateValue;
 
     const handleBlur = () => {

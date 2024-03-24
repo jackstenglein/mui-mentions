@@ -1,23 +1,24 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, stormlight } from './data';
+import { stormlight } from './data';
 
-export const FullWidth = () => {
+export const DisplayTransform = () => {
     return (
         <Stack spacing={2.5}>
             <Stack spacing={0.5}>
-                <Typography variant='h5'>Full Width</Typography>
+                <Typography variant='h5'>Display Transform</Typography>
                 <Typography>
-                    The fullWidth prop can be used to make the input take up the full width of its container.
+                    By default, the mention text is set to the display field on the selected suggestion data, or the id
+                    field if the display field does not exist. You can override this behavior with the displayTransform
+                    field on the data source.
                 </Typography>
             </Stack>
 
-            <Stack spacing={2} alignItems='center'>
+            <Stack direction='row' spacing={2}>
                 <MentionsTextField
-                    label='Full Width'
+                    label='Default'
                     fullWidth
-                    defaultValue={defaultValue}
                     dataSources={[
                         {
                             data: stormlight,
@@ -26,11 +27,14 @@ export const FullWidth = () => {
                 />
 
                 <MentionsTextField
-                    label='Not Full Width'
-                    defaultValue={defaultValue}
+                    label='Display First Name Only'
+                    fullWidth
                     dataSources={[
                         {
                             data: stormlight,
+                            displayTransform(id, display) {
+                                return display?.split(' ')[0] || id;
+                            },
                         },
                     ]}
                 />

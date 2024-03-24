@@ -2,7 +2,7 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import { InputAdornment, Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, users, variants } from './data';
+import { defaultValue, stormlight, variants } from './data';
 
 export const Adornment = () => {
     return (
@@ -21,7 +21,7 @@ export const Adornment = () => {
                         defaultValue={defaultValue}
                         dataSources={[
                             {
-                                data: users,
+                                data: stormlight,
                             },
                         ]}
                         InputProps={{
@@ -40,7 +40,7 @@ export const Adornment = () => {
                         defaultValue={defaultValue}
                         dataSources={[
                             {
-                                data: users,
+                                data: stormlight,
                             },
                         ]}
                         InputProps={{

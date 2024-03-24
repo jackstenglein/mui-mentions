@@ -1,4 +1,4 @@
-import { CircularProgress, List, Paper, Popper } from '@mui/material';
+import { CircularProgress, List, Paper, Popper, Stack } from '@mui/material';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Suggestion from './Suggestion';
 import {
@@ -49,11 +49,12 @@ interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
 }
 
 function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOverlayProps<T>) {
-    const { value, dataSources, selectionStart, selectionEnd, loading, cursorRef, onSelect, onMouseDown } = props;
+    const { value, dataSources, selectionStart, selectionEnd, cursorRef, onSelect, onMouseDown } = props;
     const ulElement = useRef<HTMLUListElement>(null);
     const [suggestions, setSuggestions] = useState<SuggestionsMap<T>>({});
     const [focusIndex, setFocusIndex] = useState(0);
     const [scrollFocusedIntoView, setScrollFocusedIntoView] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const current = ulElement.current;
@@ -80,7 +81,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
     }, [scrollFocusedIntoView, ulElement, focusIndex, setScrollFocusedIntoView]);
 
     const queryDataSource = useCallback(
-        (
+        async (
             source: SuggestionDataSource<T>,
             query: string,
             sourceIndex: number,
@@ -88,10 +89,10 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
             querySequenceEnd: number,
             fullText: string,
         ) => {
-            const dataProvider = getDataProvider(source.data, source.ignoreAccents);
-            const results = dataProvider(query);
-
-            if (results instanceof Array) {
+            try {
+                const dataProvider = getDataProvider(source.data, source.ignoreAccents);
+                setLoading(true);
+                const results = await dataProvider(query);
                 setSuggestions((s) => {
                     return {
                         ...s,
@@ -107,6 +108,10 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                         },
                     };
                 });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
             }
         },
         [setSuggestions],
@@ -199,11 +204,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
         return null;
     }
 
-    if (loading) {
-        return <CircularProgress />;
-    }
-
-    if (renderedSuggestions.length === 0) {
+    if (!loading && renderedSuggestions.length === 0) {
         return null;
     }
 
@@ -220,7 +221,13 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
             <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' sx={{ zIndex: 2 }}>
                 <Paper elevation={8} onMouseDown={onMouseDown}>
                     <List ref={ulElement} sx={{ width: '300px', maxHeight: '40vh', overflow: 'auto' }}>
-                        {renderedSuggestions}
+                        {renderedSuggestions.length > 0
+                            ? renderedSuggestions
+                            : loading && (
+                                  <Stack justifyContent='center' alignItems='center' height='40vh'>
+                                      <CircularProgress />
+                                  </Stack>
+                              )}
                     </List>
                 </Paper>
             </Popper>

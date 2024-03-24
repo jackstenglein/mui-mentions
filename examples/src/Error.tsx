@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, users, variants } from './data';
+import { defaultValue, stormlight, variants } from './data';
 
 export const Error = () => {
     return (
@@ -24,7 +24,7 @@ export const Error = () => {
                             fullWidth
                             dataSources={[
                                 {
-                                    data: users,
+                                    data: stormlight,
                                 },
                             ]}
                             error
@@ -37,7 +37,7 @@ export const Error = () => {
                             fullWidth
                             dataSources={[
                                 {
-                                    data: users,
+                                    data: stormlight,
                                 },
                             ]}
                             error

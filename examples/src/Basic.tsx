@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, users } from './data';
+import { defaultValue, stormlight } from './data';
 
 export const Basic = () => {
     return (
@@ -22,7 +22,7 @@ export const Basic = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                 />
@@ -34,7 +34,7 @@ export const Basic = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                 />
@@ -46,7 +46,7 @@ export const Basic = () => {
                     defaultValue={defaultValue}
                     dataSources={[
                         {
-                            data: users,
+                            data: stormlight,
                         },
                     ]}
                 />

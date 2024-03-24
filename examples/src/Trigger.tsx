@@ -1,23 +1,23 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { defaultValue, stormlight } from './data';
+import { stormlight } from './data';
 
-export const FullWidth = () => {
+export const Trigger = () => {
     return (
         <Stack spacing={2.5}>
             <Stack spacing={0.5}>
-                <Typography variant='h5'>Full Width</Typography>
+                <Typography variant='h5'>Trigger</Typography>
                 <Typography>
-                    The fullWidth prop can be used to make the input take up the full width of its container.
+                    By default, the suggestions overlay is triggered by the @ character. However, you can override this
+                    using the trigger field on the dataSource.
                 </Typography>
             </Stack>
 
-            <Stack spacing={2} alignItems='center'>
+            <Stack direction='row' spacing={2}>
                 <MentionsTextField
-                    label='Full Width'
+                    label='Default Trigger'
                     fullWidth
-                    defaultValue={defaultValue}
                     dataSources={[
                         {
                             data: stormlight,
@@ -26,11 +26,12 @@ export const FullWidth = () => {
                 />
 
                 <MentionsTextField
-                    label='Not Full Width'
-                    defaultValue={defaultValue}
+                    label='Trigger with #'
+                    fullWidth
                     dataSources={[
                         {
                             data: stormlight,
+                            trigger: '#',
                         },
                     ]}
                 />
