@@ -114,6 +114,7 @@ export function iterateMentionsMarkup<T extends BaseSuggestionData>(
         start: number,
     ) => void,
     plainTextProcessor?: (value: string, start: number, currentIndex: number) => void,
+    multiline?: boolean,
 ) {
     const regex = combineRegExps(
         dataSources.map((ds) =>
@@ -148,7 +149,9 @@ export function iterateMentionsMarkup<T extends BaseSuggestionData>(
         const displayPos = offset + findIndexOfCapturingGroup(markup || DefaultMarkupTemplate, 'display');
 
         const id = match[idPos];
-        const display = (displayTransform || DefaultDisplayTransform)(id, match[displayPos]);
+        const display = displayTransform
+            ? displayTransform(id, match[displayPos])
+            : DefaultDisplayTransform(id, match[displayPos], multiline);
 
         const substr = value.substring(start, match.index);
         plainTextProcessor?.(substr, start, currentPlainTextIndex);
@@ -168,11 +171,13 @@ export function iterateMentionsMarkup<T extends BaseSuggestionData>(
  * Converts the given value to plain text.
  * @param value The value which possibly contains mention markup.
  * @param dataSources An array of all DataSources used in the markup.
+ * @param multiline Whether the value is being converted in a multiline textfield.
  * @returns value with mention markup converted to plain text.
  */
 export function getPlainText<T extends BaseSuggestionData>(
     value: string,
     dataSources: SuggestionDataSource<T>[],
+    multiline?: boolean,
 ): string {
     let result = '';
     iterateMentionsMarkup(
@@ -184,6 +189,7 @@ export function getPlainText<T extends BaseSuggestionData>(
         (plainText) => {
             result += plainText;
         },
+        multiline,
     );
     return result;
 }
@@ -242,7 +248,7 @@ const escapeRegex = (str: string) => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\
  * @param selectionEndBefore The end of the selected text range before the change.
  * @param selectionEndAfter The end of the selected text range after the change.
  * @param dataSources An array of DataSources used in the markup string.
- * @returns
+ * @param multiline Whether the value is for a multiline text field.
  */
 export function applyChangeToValue<T extends BaseSuggestionData>(
     value: string,
@@ -251,8 +257,9 @@ export function applyChangeToValue<T extends BaseSuggestionData>(
     selectionEndBefore: number | null,
     selectionEndAfter: number,
     dataSources: SuggestionDataSource<T>[],
+    multiline?: boolean,
 ) {
-    const oldPlainTextValue = getPlainText(value, dataSources);
+    const oldPlainTextValue = getPlainText(value, dataSources, multiline);
 
     const lengthDelta = oldPlainTextValue.length - plainTextValue.length;
     if (selectionStartBefore === null) {
@@ -295,7 +302,7 @@ export function applyChangeToValue<T extends BaseSuggestionData>(
 
     if (!willRemoveMention) {
         // test for auto-completion changes
-        const controlPlainTextValue = getPlainText(newValue, dataSources);
+        const controlPlainTextValue = getPlainText(newValue, dataSources, multiline);
         if (controlPlainTextValue !== plainTextValue) {
             // some auto-correction is going on
 

@@ -91,7 +91,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         input.setSelectionRange(selectionStart, selectionEnd);
     }, [selectionStart, selectionEnd, inputRef]);
 
-    const { value, dataSources, highlightColor, ...others } = props;
+    const { value, defaultValue: _defaultValue, dataSources, highlightColor, ...others } = props;
     const finalValue = value !== undefined ? value : stateValue;
 
     const handleBlur = () => {
@@ -122,9 +122,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         const end = start + querySequenceEnd - querySequenceStart;
 
         let insert = makeMentionsMarkup(markup || DefaultMarkupTemplate, suggestion.id, suggestion.display);
-        let displayValue = displayTransform
-            ? displayTransform(suggestion.id, suggestion.display)
-            : DefaultDisplayTransform(suggestion.id, suggestion.display, props.multiline);
+        let displayValue = (displayTransform || DefaultDisplayTransform)(suggestion.id, suggestion.display);
 
         if (appendSpaceOnAdd) {
             insert += ' ';
@@ -166,6 +164,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
             selectionEndBefore,
             ev.target.selectionEnd || 0,
             dataSources,
+            props.multiline,
         );
 
         // In case a mention is deleted, also adjust the new plain text value
@@ -203,7 +202,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
     const inputProps: TextFieldProps = {
         ...others,
-        value: getPlainText(finalValue, dataSources),
+        value: getPlainText(finalValue, dataSources, props.multiline),
         onChange: handleChange,
         onSelect: handleSelect,
         onBlur: handleBlur,

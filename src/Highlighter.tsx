@@ -86,7 +86,7 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
         }
     };
 
-    iterateMentionsMarkup(value, dataSources, handleMention, handlePlainText);
+    iterateMentionsMarkup(value, dataSources, handleMention, handlePlainText, multiline);
 
     const rect = getHighlighterRect(props.inputRef);
 
@@ -108,7 +108,7 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
             >
                 {components}
                 <Box component='span' visibility='hidden'>
-                    .
+                    {' '}
                 </Box>
             </Box>
         </Portal>

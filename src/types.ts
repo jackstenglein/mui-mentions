@@ -31,7 +31,7 @@ export function DefaultDisplayTransform(id: string, display?: string, convertSpa
     if (!convertSpaces) {
         return display || id;
     }
-    return display?.replaceAll(' ', '\u00A0') || id.replaceAll(' ', '\u00A0');
+    return display?.replace(/ /g, '\u00A0') || id.replace(/ /g, '\u00A0');
 }
 
 /**
