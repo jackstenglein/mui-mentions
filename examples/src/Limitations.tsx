@@ -12,9 +12,7 @@ export const Limitations = () => {
                     </li>
                     <li>
                         <Typography>
-                            Mentions can not split across two lines in a multiline field without rendering incorrectly.
-                            Instead, multiline fields by default convert all spaces in a mention to the Unicode no-break
-                            space character (\u00A0) to keep mentions on a single line.
+                            Mentions splitting across two lines in a multiline field may render incorrectly.
                         </Typography>
                     </li>
                 </ul>
