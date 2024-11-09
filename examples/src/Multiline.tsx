@@ -12,6 +12,16 @@ export const Multiline = () => {
                     The multiline prop transforms the text field into a TextareaAutosize element. Unless the rows prop
                     is set, the height of the text field dynamically matches its content (using TextareaAutosize). You
                     can use the minRows and maxRows props to bound it.
+                    <br />
+                    <br />
+                    <strong>
+                        WARNING: in multiline mode, the default displayTransform function replaces all spaces with the
+                        Unicode no-break space character (\u00A0).
+                    </strong>
+                    This ensures that mentions that would normally split across two lines are instead displayed on a
+                    single line, keeping their highlighting in place. If you override the displayTransform function for
+                    a multiline field, make sure to reimplement this behavior, otherwise mentions that split across
+                    lines will only highlight the first word.
                 </Typography>
             </Stack>
 

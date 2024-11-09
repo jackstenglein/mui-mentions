@@ -5,7 +5,10 @@ import { BaseSuggestionData, SuggestionDataSource } from './types';
 import { iterateMentionsMarkup } from './utils/utils';
 
 interface HighlighterProps<T extends BaseSuggestionData> {
-    /** Ref applied to the main container of the highlighter. */
+    /**
+     * Ref applied to the main container of the highlighter. Used to keep the scroll position of
+     * the highlighter in sync with the scroll position of the TextField.
+     */
     highlighterRef: React.RefObject<HTMLDivElement>;
 
     /** Ref applied to the element which keeps track of the cursor position. */
