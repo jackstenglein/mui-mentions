@@ -6,7 +6,7 @@
     "module": "./dist/esm/index.js",
     "types": "./dist/esm/index.d.ts",
     "scripts": {
-        "start": "parcel examples/src/index.html --dist-dir .parcel-dist",
+        "start": "rm -rf examples/.parcel-cache && parcel examples/src/index.html --dist-dir .parcel-dist",
         "docs": "parcel build ./examples --dist-dir docs --public-url .",
         "build": "npm run build:esm && npm run build:cjs",
         "build:esm": "tsc",

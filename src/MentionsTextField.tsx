@@ -91,12 +91,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         input.setSelectionRange(selectionStart, selectionEnd);
     }, [selectionStart, selectionEnd, inputRef]);
 
-    const { value, defaultValue, dataSources, highlightColor, ...others } = props;
+    const { value, defaultValue: _defaultValue, dataSources, highlightColor, ...others } = props;
     const finalValue = value !== undefined ? value : stateValue;
 
     const handleBlur = () => {
         if (!suggestionsMouseDown.current) {
-            console.log('Removing selection start/end');
             setSelectionStart(null);
             setSelectionEnd(null);
         }
@@ -165,6 +164,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
             selectionEndBefore,
             ev.target.selectionEnd || 0,
             dataSources,
+            props.multiline,
         );
 
         // In case a mention is deleted, also adjust the new plain text value
@@ -202,7 +202,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
     const inputProps: TextFieldProps = {
         ...others,
-        value: getPlainText(finalValue, dataSources),
+        value: getPlainText(finalValue, dataSources, props.multiline),
         onChange: handleChange,
         onSelect: handleSelect,
         onBlur: handleBlur,
