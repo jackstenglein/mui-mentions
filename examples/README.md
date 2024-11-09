@@ -4,7 +4,7 @@ In the examples directory, install all dependencies:
 
 ### `npm i`
 
-Then, from the project root directory, run the command:
+Then run the command:
 
 ### `npm start`
 

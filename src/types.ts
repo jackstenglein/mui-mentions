@@ -24,14 +24,10 @@ export const DefaultMarkupTemplate = '@[__display__](__id__)';
  * Returns the default display string for the given suggestion.
  * @param id The id of the suggestion to get the display string for.
  * @param display The default display string of the suggestion.
- * @param convertSpaces Whether to converts spaces to non-breaking spaces (Ex: for multiline inputs).
  * @returns The default display string for the suggestion.
  */
-export function DefaultDisplayTransform(id: string, display?: string, convertSpaces?: boolean): string {
-    if (!convertSpaces) {
-        return display || id;
-    }
-    return display?.replaceAll(' ', '\u00A0') || id.replaceAll(' ', '\u00A0');
+export function DefaultDisplayTransform(id: string, display?: string): string {
+    return display || id;
 }
 
 /**

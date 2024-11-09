@@ -91,11 +91,12 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         input.setSelectionRange(selectionStart, selectionEnd);
     }, [selectionStart, selectionEnd, inputRef]);
 
-    const { value, dataSources, highlightColor, ...others } = props;
+    const { value, defaultValue, dataSources, highlightColor, ...others } = props;
     const finalValue = value !== undefined ? value : stateValue;
 
     const handleBlur = () => {
         if (!suggestionsMouseDown.current) {
+            console.log('Removing selection start/end');
             setSelectionStart(null);
             setSelectionEnd(null);
         }
@@ -122,9 +123,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         const end = start + querySequenceEnd - querySequenceStart;
 
         let insert = makeMentionsMarkup(markup || DefaultMarkupTemplate, suggestion.id, suggestion.display);
-        let displayValue = displayTransform
-            ? displayTransform(suggestion.id, suggestion.display)
-            : DefaultDisplayTransform(suggestion.id, suggestion.display, props.multiline);
+        let displayValue = (displayTransform || DefaultDisplayTransform)(suggestion.id, suggestion.display);
 
         if (appendSpaceOnAdd) {
             insert += ' ';

@@ -5,7 +5,7 @@
 ![npm-typescript]
 [![License][github-license]][github-license-url]
 
-@ mention users in a [MUI TextField](https://mui.com/material-ui/react-text-field/). View a live demo and documentation [here](https://jackstenglein.github.io/mui-mentions/).
+[Live Demo](https://jackstenglein.github.io/mui-mentions/)
 
 [npm-url]: https://www.npmjs.com/package/@jackstenglein/mui-mentions
 [npm-image]: https://img.shields.io/npm/v/@jackstenglein/mui-mentions
