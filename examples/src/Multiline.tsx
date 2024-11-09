@@ -61,9 +61,6 @@ export const Multiline = () => {
                             dataSources={[
                                 {
                                     data: stormlight,
-                                    displayTransform(id, display) {
-                                        return display?.replace(/ /g, '\u00A0') || id.replace(/ /g, '\u00A0');
-                                    },
                                 },
                             ]}
                             multiline
