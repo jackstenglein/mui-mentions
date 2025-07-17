@@ -31,14 +31,33 @@ interface HighlighterProps<T extends BaseSuggestionData> {
 
     /** The color of the highlight. */
     color?: string;
+
+    /** Whether to use text color highlighting instead of background color. */
+    highlightTextColor?: boolean;
 }
 
 function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): ReactNode {
-    const { highlighterRef, cursorRef, selectionEnd, selectionStart, value, dataSources, multiline } = props;
+    const {
+        highlighterRef,
+        cursorRef,
+        selectionEnd,
+        selectionStart,
+        value,
+        dataSources,
+        multiline,
+        highlightTextColor,
+    } = props;
     const components: JSX.Element[] = [];
 
     const handleMention = (_markup: string, index: number, _plainTextIndex: number, id: string, display: string) => {
-        components.push(<Mention key={`${id}-${index}`} display={display} color={props.color} />);
+        components.push(
+            <Mention
+                key={`${id}-${index}`}
+                display={display}
+                color={props.color}
+                highlightTextColor={highlightTextColor}
+            />,
+        );
     };
 
     const handlePlainText = (text: string, index: number, indexInPlaintext: number) => {
@@ -54,7 +73,11 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
 
         if (!renderCursor) {
             components.push(
-                <Box key={`${index}-${indexInPlaintext}`} component='span' visibility='hidden'>
+                <Box
+                    key={`${index}-${indexInPlaintext}`}
+                    component='span'
+                    visibility={highlightTextColor ? 'visible' : 'hidden'}
+                >
                     {text}
                 </Box>,
             );
@@ -65,7 +88,11 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
 
             if (startText) {
                 components.push(
-                    <Box key={`${index}-${indexInPlaintext}-precursor`} component='span' visibility='hidden'>
+                    <Box
+                        key={`${index}-${indexInPlaintext}-precursor`}
+                        component='span'
+                        visibility={highlightTextColor ? 'visible' : 'hidden'}
+                    >
                         {startText}
                     </Box>,
                 );
@@ -75,7 +102,11 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
 
             if (endText) {
                 components.push(
-                    <Box key={`${index}-${indexInPlaintext}-postcursor`} component='span' visibility='hidden'>
+                    <Box
+                        key={`${index}-${indexInPlaintext}-postcursor`}
+                        component='span'
+                        visibility={highlightTextColor ? 'visible' : 'hidden'}
+                    >
                         {endText}
                     </Box>,
                 );

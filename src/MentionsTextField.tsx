@@ -56,6 +56,13 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      * A ref to the underlying input element.
      */
     inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+
+    /**
+     * If true, mentions will be highlighted with text color (theme.palette.primary.main)
+     * instead of background color.
+     * @default false
+     */
+    highlightTextColor?: boolean;
 }
 
 export type MentionsTextFieldProps<
@@ -117,6 +124,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         dataSources,
         highlightColor,
         inputRef: externalInputRef,
+        highlightTextColor,
         ...others
     } = props;
     const finalValue = value !== undefined ? value : stateValue;
@@ -234,7 +242,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         onSelect: handleSelect,
         onBlur: handleBlur,
         inputProps: {
-            sx: { overscrollBehavior: 'none' },
+            sx: {
+                overscrollBehavior: 'none',
+                color: highlightTextColor ? 'transparent' : 'inherit',
+                caretColor: highlightTextColor ? 'black' : 'inherit',
+            },
         },
     };
 
@@ -250,6 +262,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 inputRef={inputRef}
                 multiline={inputProps.multiline}
                 color={highlightColor || props.color}
+                highlightTextColor={highlightTextColor}
             />
             <TextField inputRef={handleInputRef} {...inputProps} />
             <SuggestionsOverlay
