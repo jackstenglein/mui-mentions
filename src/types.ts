@@ -7,6 +7,9 @@ export interface BaseSuggestionData {
 
     /** The user-facing display string of the suggestion data. */
     display?: string;
+
+    /** The user-facing image display for the suggestion */
+    imageSrc?: string;
 }
 
 /**
@@ -146,4 +149,8 @@ export interface MentionData {
 
     /** The index of the mention in the plain text string. */
     plainTextIndex: number;
+}
+
+export interface MentionsTextFieldOptions {
+    images?: boolean;
 }

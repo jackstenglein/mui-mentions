@@ -4,6 +4,7 @@ import Suggestion from './Suggestion';
 import {
     BaseSuggestionData,
     DefaultTrigger,
+    MentionsTextFieldOptions,
     SuggestionData,
     SuggestionDataSource,
     Suggestions,
@@ -46,10 +47,13 @@ interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
 
     /** Callback invoked on mouse down in the suggestions overlay. */
     onMouseDown: () => void;
+
+    /** */
+    options?: MentionsTextFieldOptions;
 }
 
 function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOverlayProps<T>) {
-    const { value, dataSources, selectionStart, selectionEnd, cursorRef, onSelect, onMouseDown } = props;
+    const { value, dataSources, selectionStart, selectionEnd, cursorRef, onSelect, onMouseDown, options } = props;
     const ulElement = useRef<HTMLUListElement>(null);
     const [suggestions, setSuggestions] = useState<SuggestionsMap<T>>({});
     const [focusIndex, setFocusIndex] = useState(0);
@@ -191,6 +195,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                         focused={index === focusIndex}
                         onClick={() => handleSelect(result, queryInfo)}
                         onMouseEnter={() => handleMouseEnter(index)}
+                        options={options}
                     />
                 )),
             ],

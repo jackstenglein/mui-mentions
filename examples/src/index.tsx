@@ -14,6 +14,7 @@ import ReactDOM from 'react-dom/client';
 import { Adornment } from './Adornment';
 import { AppendSpaceOnAdd } from './AppendSpaceOnAdd';
 import { AsychronousData } from './AsynchronousData';
+import { AvatarImages } from './AvatarImages';
 import { Basic } from './Basic';
 import { Color } from './Color';
 import { Controlled } from './Controlled';
@@ -76,7 +77,7 @@ const App = () => {
                     <FullWidth />
                     <Controlled />
                     <Color />
-
+                    <AvatarImages />
                     <Limitations />
                 </Stack>
             </Container>
