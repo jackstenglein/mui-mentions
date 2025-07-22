@@ -14,7 +14,6 @@ import ReactDOM from 'react-dom/client';
 import { Adornment } from './Adornment';
 import { AppendSpaceOnAdd } from './AppendSpaceOnAdd';
 import { AsychronousData } from './AsynchronousData';
-import { AvatarImages } from './AvatarImages';
 import { Basic } from './Basic';
 import { Color } from './Color';
 import { Controlled } from './Controlled';
@@ -22,6 +21,7 @@ import { DisplayTransform } from './DisplayTransform';
 import { Error } from './Error';
 import { FormProps } from './FormProps';
 import { FullWidth } from './FullWidth';
+import { Images } from './Images';
 import { Limitations } from './Limitations';
 import { Multiline } from './Multiline';
 import { MultipleDataSources } from './MultipleDataSources';
@@ -77,7 +77,7 @@ const App = () => {
                     <FullWidth />
                     <Controlled />
                     <Color />
-                    <AvatarImages />
+                    <Images />
                     <Limitations />
                 </Stack>
             </Container>

@@ -3,12 +3,15 @@ import React from 'react';
 import { MentionsTextField } from '../../src';
 import { defaultValue, stormlight } from './data';
 
-export const AvatarImages = () => {
+export const Images = () => {
     return (
         <Stack spacing={2.5}>
             <Stack spacing={0.5}>
-                <Typography variant='h5'>TextField with Images</Typography>
-                <Typography>You can opt into displaying images alongside the display text</Typography>
+                <Typography variant='h5'>Images</Typography>
+                <Typography>
+                    By enabling images on the MentionTextField, and supplying an imageSrc value for each suggestion, you
+                    can display an avatar for users, or other images for different data types.
+                </Typography>
             </Stack>
 
             <Stack direction='row' spacing={2}>
