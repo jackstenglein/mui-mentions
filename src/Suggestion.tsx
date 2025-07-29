@@ -47,7 +47,7 @@ function Suggestion<T extends BaseSuggestionData>(props: SuggestionProps<T>): Re
             onClick={onClick}
             onMouseEnter={onMouseEnter}
         >
-            {options?.images && (
+            {options?.suggestionImages && (
                 <img
                     src={suggestion.imageSrc}
                     alt=''

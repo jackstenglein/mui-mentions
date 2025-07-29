@@ -9,7 +9,7 @@ export const Images = () => {
             <Stack spacing={0.5}>
                 <Typography variant='h5'>Images</Typography>
                 <Typography>
-                    By enabling images on the MentionTextField, and supplying an imageSrc value for each suggestion, you
+                    By enabling suggestionImages on the MentionTextField, and supplying an imageSrc value for each suggestion, you
                     can display an avatar for users, or other images for different data types.
                 </Typography>
             </Stack>
@@ -21,7 +21,7 @@ export const Images = () => {
                     fullWidth
                     defaultValue={defaultValue}
                     options={{
-                        images: true,
+                        suggestionImages: true,
                     }}
                     dataSources={[
                         {

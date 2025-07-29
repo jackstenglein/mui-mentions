@@ -152,5 +152,5 @@ export interface MentionData {
 }
 
 export interface MentionsTextFieldOptions {
-    images?: boolean;
+    suggestionImages?: boolean;
 }
