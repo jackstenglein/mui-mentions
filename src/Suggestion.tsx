@@ -1,6 +1,6 @@
 import { ListItemButton } from '@mui/material';
 import React, { ReactNode } from 'react';
-import { BaseSuggestionData, DefaultDisplayTransform, SuggestionData } from './types';
+import { BaseSuggestionData, DefaultDisplayTransform, MentionsTextFieldOptions, SuggestionData } from './types';
 
 interface SuggestionProps<T extends BaseSuggestionData> {
     /** The id of the suggestion. */
@@ -26,10 +26,13 @@ interface SuggestionProps<T extends BaseSuggestionData> {
 
     /** Called when the user mouses over the suggestion. */
     onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+
+    /** */
+    options?: MentionsTextFieldOptions;
 }
 
 function Suggestion<T extends BaseSuggestionData>(props: SuggestionProps<T>): ReactNode {
-    const { renderSuggestion, suggestion, focused, onClick, onMouseEnter } = props;
+    const { renderSuggestion, suggestion, focused, onClick, onMouseEnter, options } = props;
 
     if (renderSuggestion) {
         return renderSuggestion(props);
@@ -44,6 +47,15 @@ function Suggestion<T extends BaseSuggestionData>(props: SuggestionProps<T>): Re
             onClick={onClick}
             onMouseEnter={onMouseEnter}
         >
+            {options?.suggestionImages && (
+                <img
+                    src={suggestion.imageSrc}
+                    alt=''
+                    height='25px'
+                    width='25px'
+                    style={{ borderRadius: '16px', marginRight: '8px' }}
+                />
+            )}
             {display}
         </ListItemButton>
     );

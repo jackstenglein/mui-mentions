@@ -21,6 +21,7 @@ import { DisplayTransform } from './DisplayTransform';
 import { Error } from './Error';
 import { FormProps } from './FormProps';
 import { FullWidth } from './FullWidth';
+import { Images } from './Images';
 import { Limitations } from './Limitations';
 import { Multiline } from './Multiline';
 import { MultipleDataSources } from './MultipleDataSources';
@@ -76,7 +77,7 @@ const App = () => {
                     <FullWidth />
                     <Controlled />
                     <Color />
-
+                    <Images />
                     <Limitations />
                 </Stack>
             </Container>
