@@ -3,6 +3,7 @@ import {
     BaseSuggestionData,
     DefaultDisplayTransform,
     DefaultMarkupTemplate,
+    DefaultTrigger,
     MentionData,
     SuggestionData,
     SuggestionDataSource,
@@ -100,6 +101,8 @@ function findIndexOfCapturingGroup(markup: string, parameterName: 'id' | 'displa
  * @param dataSources An array of all DataSources used in the markup.
  * @param markupProcessor A callback function that processes each mention markup instance.
  * @param plainTextProcessor A callback function that processes each plain text instance.
+ * @param multiline Whether the value is being processed in a multiline context.
+ * @param showTriggerInDisplay Whether to include trigger characters in position calculations.
  */
 export function iterateMentionsMarkup<T extends BaseSuggestionData>(
     value: string,
@@ -115,6 +118,7 @@ export function iterateMentionsMarkup<T extends BaseSuggestionData>(
     ) => void,
     plainTextProcessor?: (value: string, start: number, currentIndex: number) => void,
     multiline?: boolean,
+    showTriggerInDisplay?: boolean,
 ) {
     const regex = combineRegExps(
         dataSources.map((ds) =>
@@ -158,7 +162,15 @@ export function iterateMentionsMarkup<T extends BaseSuggestionData>(
         currentPlainTextIndex += substr.length;
 
         markupProcessor(match[0], match.index, currentPlainTextIndex, id, display, mentionChildIndex, start);
-        currentPlainTextIndex += display.length;
+
+        // Calculate display length including trigger if showTriggerInDisplay is true
+        let mentionDisplayLength = display.length;
+        if (showTriggerInDisplay) {
+            const trigger = dataSources[mentionChildIndex].trigger || DefaultTrigger;
+            mentionDisplayLength += trigger.length;
+        }
+
+        currentPlainTextIndex += mentionDisplayLength;
         start = regex.lastIndex;
     }
 
@@ -178,19 +190,29 @@ export function getPlainText<T extends BaseSuggestionData>(
     value: string,
     dataSources: SuggestionDataSource<T>[],
     multiline?: boolean,
+    showTriggerInDisplay?: boolean,
 ): string {
     let result = '';
+
     iterateMentionsMarkup(
         value,
         dataSources,
-        (_match, _index, _plainTextIndex, _id, display) => {
-            result += display;
+        (_match, _index, _plainTextIndex, _id, display, mentionIndex) => {
+            if (showTriggerInDisplay) {
+                const trigger = dataSources[mentionIndex].trigger || DefaultTrigger;
+                const mentionText = trigger + display;
+                result += mentionText;
+            } else {
+                result += display;
+            }
         },
         (plainText) => {
             result += plainText;
         },
         multiline,
+        showTriggerInDisplay,
     );
+
     return result;
 }
 
@@ -258,8 +280,9 @@ export function applyChangeToValue<T extends BaseSuggestionData>(
     selectionEndAfter: number,
     dataSources: SuggestionDataSource<T>[],
     multiline?: boolean,
+    showTriggerInDisplay?: boolean,
 ) {
-    const oldPlainTextValue = getPlainText(value, dataSources, multiline);
+    const oldPlainTextValue = getPlainText(value, dataSources, multiline, showTriggerInDisplay);
 
     const lengthDelta = oldPlainTextValue.length - plainTextValue.length;
     if (selectionStartBefore === null) {
@@ -291,18 +314,18 @@ export function applyChangeToValue<T extends BaseSuggestionData>(
         spliceEnd = Math.max(selectionEndBefore, selectionStartBefore + lengthDelta);
     }
 
-    let mappedSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'START');
-    let mappedSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'END');
+    let mappedSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'START', showTriggerInDisplay);
+    let mappedSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'END', showTriggerInDisplay);
 
-    const controlSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'NULL');
-    const controlSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'NULL');
+    const controlSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'NULL', showTriggerInDisplay);
+    const controlSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'NULL', showTriggerInDisplay);
     const willRemoveMention = controlSpliceStart === null || controlSpliceEnd === null;
 
     let newValue = spliceString(value, mappedSpliceStart || 0, mappedSpliceEnd || 0, insert);
 
     if (!willRemoveMention) {
         // test for auto-completion changes
-        const controlPlainTextValue = getPlainText(newValue, dataSources, multiline);
+        const controlPlainTextValue = getPlainText(newValue, dataSources, multiline, showTriggerInDisplay);
         if (controlPlainTextValue !== plainTextValue) {
             // some auto-correction is going on
 
@@ -317,8 +340,8 @@ export function applyChangeToValue<T extends BaseSuggestionData>(
             spliceEnd = oldPlainTextValue.lastIndexOf(plainTextValue.substring(selectionEndAfter));
 
             // re-map the corrected indices
-            mappedSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'START');
-            mappedSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'END');
+            mappedSpliceStart = mapPlainTextIndex(value, dataSources, spliceStart, 'START', showTriggerInDisplay);
+            mappedSpliceEnd = mapPlainTextIndex(value, dataSources, spliceEnd, 'END', showTriggerInDisplay);
             newValue = spliceString(value, mappedSpliceStart || 0, mappedSpliceEnd || 0, insert);
         }
     }
@@ -335,6 +358,7 @@ export function applyChangeToValue<T extends BaseSuggestionData>(
  *   START returns the index of the mention markup's first character (default).
  *   END returns the index after the mention markup's last character.
  *   NULL returns null.
+ * @param showTriggerInDisplay Whether the plain text includes trigger characters.
  * @returns The index in the markup string.
  */
 export function mapPlainTextIndex<T extends BaseSuggestionData>(
@@ -342,6 +366,7 @@ export function mapPlainTextIndex<T extends BaseSuggestionData>(
     dataSources: SuggestionDataSource<T>[],
     indexInPlainText: number,
     inMarkupCorrection: 'START' | 'END' | 'NULL' = 'START',
+    showTriggerInDisplay?: boolean,
 ): number | null | undefined {
     if (typeof indexInPlainText !== 'number') {
         return indexInPlainText;
@@ -364,10 +389,19 @@ export function mapPlainTextIndex<T extends BaseSuggestionData>(
         mentionPlainTextIndex: number,
         _id: string,
         display: string,
+        mentionIndex: number,
     ) => {
         if (result !== undefined) return;
 
-        if (mentionPlainTextIndex + display.length > indexInPlainText) {
+        // Calculate actual display length including trigger if showTriggerInDisplay is true
+        let actualDisplayLength = display.length;
+        if (showTriggerInDisplay) {
+            const trigger = dataSources[mentionIndex].trigger || DefaultTrigger;
+            actualDisplayLength += trigger.length;
+        }
+
+        // Now working in unified coordinates that match indexInPlainText
+        if (mentionPlainTextIndex + actualDisplayLength > indexInPlainText) {
             // found the corresponding position inside current match,
             // return the index of the first or after the last char of the matching markup
             // depending on the value of `inMarkupCorrection`
@@ -379,7 +413,7 @@ export function mapPlainTextIndex<T extends BaseSuggestionData>(
         }
     };
 
-    iterateMentionsMarkup(value, dataSources, markupProcessor, plainTextProcessor);
+    iterateMentionsMarkup(value, dataSources, markupProcessor, plainTextProcessor, undefined, showTriggerInDisplay);
 
     // when a mention is at the end of the value and we want to get the cursor position
     // at the end of the string, result is undefined
@@ -411,6 +445,7 @@ export function findStartOfMentionInPlainText<T extends BaseSuggestionData>(
     value: string,
     dataSources: SuggestionDataSource<T>[],
     indexInPlainText: number,
+    showTriggerInDisplay?: boolean,
 ): number | undefined {
     let result: number | undefined = undefined;
 
@@ -426,7 +461,8 @@ export function findStartOfMentionInPlainText<T extends BaseSuggestionData>(
         }
     };
 
-    iterateMentionsMarkup(value, dataSources, markupProcessor);
+    iterateMentionsMarkup(value, dataSources, markupProcessor, undefined, showTriggerInDisplay);
+
     return result;
 }
 
@@ -434,22 +470,31 @@ export function findStartOfMentionInPlainText<T extends BaseSuggestionData>(
  * Parses a list of mentions from the given markup string.
  * @param value The markup string value to parse.
  * @param dataSources An array of SuggestionDataSources used in the markup string.
+ * @param showTriggerInDisplay Whether to include trigger characters in position calculations.
  * @returns An array of MentionDatas parsed from the given markup string.
  */
 export function getMentions<T extends BaseSuggestionData>(
     value: string,
     dataSources: SuggestionDataSource<T>[],
+    showTriggerInDisplay?: boolean,
 ): MentionData[] {
     const mentions: MentionData[] = [];
-    iterateMentionsMarkup(value, dataSources, (_match, index, plainTextIndex, id, display, childIndex) => {
-        mentions.push({
-            id,
-            display,
-            dataSourceIndex: childIndex,
-            index,
-            plainTextIndex,
-        });
-    });
+    iterateMentionsMarkup(
+        value,
+        dataSources,
+        (_match, index, plainTextIndex, id, display, childIndex) => {
+            mentions.push({
+                id,
+                display,
+                dataSourceIndex: childIndex,
+                index,
+                plainTextIndex,
+            });
+        },
+        undefined,
+        undefined,
+        showTriggerInDisplay,
+    );
     return mentions;
 }
 
@@ -466,15 +511,28 @@ export function countSuggestions<T extends BaseSuggestionData>(suggestions: Sugg
  * Returns the index of the end of the last mention in the given markup string.
  * @param value The markup string to search for mentions.
  * @param dataSources An array of SuggestionDataSources used in the markup string.
+ * @param showTriggerInDisplay Whether to include trigger characters in position calculations.
  * @returns The index of the end of the last mention, or 0 if there are no mentions.
  */
 export function getEndOfLastMention<T extends BaseSuggestionData>(
     value: string,
     dataSources: SuggestionDataSource<T>[],
+    showTriggerInDisplay?: boolean,
 ) {
-    const mentions = getMentions(value, dataSources);
+    const mentions = getMentions(value, dataSources, showTriggerInDisplay);
     const lastMention = mentions[mentions.length - 1];
-    return lastMention ? lastMention.plainTextIndex + lastMention.display.length : 0;
+    if (!lastMention) {
+        return 0;
+    }
+
+    // Calculate the actual display length including trigger if needed
+    let displayLength = lastMention.display.length;
+    if (showTriggerInDisplay) {
+        const trigger = dataSources[lastMention.dataSourceIndex].trigger || DefaultTrigger;
+        displayLength += trigger.length;
+    }
+
+    return lastMention.plainTextIndex + displayLength;
 }
 
 /**

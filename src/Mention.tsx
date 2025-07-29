@@ -15,7 +15,7 @@ interface MentionProps {
 const Mention: React.FC<MentionProps> = ({ display, color, highlightTextColor }) => {
     if (highlightTextColor) {
         return (
-            <Box component='span' sx={{ position: 'relative' }}>
+            <Box component='span' sx={{ position: 'relative', color: 'transparent' }}>
                 {display}
                 <Box
                     component='span'
@@ -26,6 +26,7 @@ const Mention: React.FC<MentionProps> = ({ display, color, highlightTextColor })
                         right: '0px',
                         bottom: '0px',
                         color: (theme) => theme.palette.primary.main,
+                        zIndex: 1,
                     }}
                 >
                     {display}

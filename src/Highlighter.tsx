@@ -1,7 +1,7 @@
 import { Box, Portal } from '@mui/material';
 import React, { ReactNode } from 'react';
 import Mention from './Mention';
-import { BaseSuggestionData, SuggestionDataSource } from './types';
+import { BaseSuggestionData, DefaultTrigger, SuggestionDataSource } from './types';
 import { iterateMentionsMarkup } from './utils/utils';
 
 interface HighlighterProps<T extends BaseSuggestionData> {
@@ -34,6 +34,9 @@ interface HighlighterProps<T extends BaseSuggestionData> {
 
     /** Whether to use text color highlighting instead of background color. */
     highlightTextColor?: boolean;
+
+    /** Whether to show trigger character in displayed mention text. */
+    showTriggerInDisplay?: boolean;
 }
 
 function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): ReactNode {
@@ -46,14 +49,30 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
         dataSources,
         multiline,
         highlightTextColor,
+        showTriggerInDisplay,
     } = props;
     const components: JSX.Element[] = [];
 
-    const handleMention = (_markup: string, index: number, _plainTextIndex: number, id: string, display: string) => {
+    // Convert selection coordinates to the coordinate system used by iterateMentionsMarkup
+    // When showTriggerInDisplay is true, selectionStart/End are in "with triggers" coordinates
+    // but iterateMentionsMarkup works in "without triggers" coordinates
+
+    const handleMention = (
+        _markup: string,
+        index: number,
+        _plainTextIndex: number,
+        id: string,
+        display: string,
+        mentionIndex: number,
+    ) => {
+        const finalDisplay = showTriggerInDisplay
+            ? (dataSources[mentionIndex].trigger || DefaultTrigger) + display
+            : display;
+
         components.push(
             <Mention
                 key={`${id}-${index}`}
-                display={display}
+                display={finalDisplay}
                 color={props.color}
                 highlightTextColor={highlightTextColor}
             />,
@@ -82,7 +101,7 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
                 </Box>,
             );
         } else {
-            const splitIndex = selectionStart - indexInPlaintext;
+            const splitIndex = (selectionStart || 0) - indexInPlaintext;
             const startText = text.substring(0, splitIndex);
             const endText = text.substring(splitIndex);
 
@@ -114,7 +133,7 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
         }
     };
 
-    iterateMentionsMarkup(value, dataSources, handleMention, handlePlainText, multiline);
+    iterateMentionsMarkup(value, dataSources, handleMention, handlePlainText, multiline, showTriggerInDisplay);
 
     const rect = getHighlighterRect(props.inputRef);
 

@@ -25,6 +25,7 @@ import { Images } from './Images';
 import { Limitations } from './Limitations';
 import { Multiline } from './Multiline';
 import { MultipleDataSources } from './MultipleDataSources';
+import { ShowTriggerInDisplay } from './ShowTriggerInDisplay';
 import { Sizes } from './Sizes';
 import { Trigger } from './Trigger';
 
@@ -65,6 +66,7 @@ const App = () => {
                     <Basic />
                     <Trigger />
                     <MultipleDataSources />
+                    <ShowTriggerInDisplay />
                     <AppendSpaceOnAdd />
                     <DisplayTransform />
                     <AsychronousData />

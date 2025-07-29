@@ -6,6 +6,7 @@ import {
     BaseSuggestionData,
     DefaultDisplayTransform,
     DefaultMarkupTemplate,
+    DefaultTrigger,
     MentionData,
     MentionsTextFieldOptions,
     SuggestionData,
@@ -64,6 +65,12 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      * @default false
      */
     highlightTextColor?: boolean;
+
+    /**
+     * If true, shows the trigger character (@ or #) in the displayed mention text.
+     * @default false
+     */
+    showTriggerInDisplay?: boolean;
 }
 
 export type MentionsTextFieldProps<
@@ -111,6 +118,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         highlightColor,
         highlightTextColor,
         options,
+        showTriggerInDisplay,
         ...others
     } = props;
     const finalValue = value !== undefined ? value : stateValue;
@@ -129,13 +137,13 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
     const addMention = (
         suggestion: SuggestionData<T>,
-        { childIndex, querySequenceStart, querySequenceEnd, plainTextValue }: SuggestionsQueryInfo,
+        { childIndex, querySequenceStart, querySequenceEnd, plainTextValue: _plainTextValue }: SuggestionsQueryInfo,
     ) => {
         const dataSource = dataSources[childIndex];
 
         const { markup, displayTransform, appendSpaceOnAdd, onAdd } = dataSource;
 
-        const start = mapPlainTextIndex(finalValue, dataSources, querySequenceStart, 'START');
+        const start = mapPlainTextIndex(finalValue, dataSources, querySequenceStart, 'START', showTriggerInDisplay);
         if (!isNumber(start)) {
             return;
         }
@@ -145,6 +153,12 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         let insert = makeMentionsMarkup(markup || DefaultMarkupTemplate, suggestion.id, suggestion.display);
         let displayValue = (displayTransform || DefaultDisplayTransform)(suggestion.id, suggestion.display);
 
+        // Add trigger prefix if showTriggerInDisplay is true
+        if (showTriggerInDisplay) {
+            const trigger = dataSource.trigger || DefaultTrigger;
+            displayValue = trigger + displayValue;
+        }
+
         if (appendSpaceOnAdd) {
             insert += ' ';
             displayValue += ' ';
@@ -153,11 +167,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         const newCaretPosition = querySequenceStart + displayValue.length;
         setSelectionStart(newCaretPosition);
         setSelectionEnd(newCaretPosition);
-
         // Propagate change
         const newValue = spliceString(finalValue, start, end, insert);
-        const mentions = getMentions(newValue, dataSources);
-        const newPlainTextValue = spliceString(plainTextValue, querySequenceStart, querySequenceEnd, displayValue);
+        const mentions = getMentions(newValue, dataSources, showTriggerInDisplay);
+
+        const newPlainTextValue = getPlainText(newValue, dataSources, props.multiline, showTriggerInDisplay);
 
         const onChange = props.onChange || setStateValue;
         onChange(newValue, newPlainTextValue, mentions);
@@ -186,10 +200,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
             ev.target.selectionEnd || 0,
             dataSources,
             props.multiline,
+            showTriggerInDisplay,
         );
 
         // In case a mention is deleted, also adjust the new plain text value
-        newPlainTextValue = getPlainText(newValue, dataSources);
+        newPlainTextValue = getPlainText(newValue, dataSources, props.multiline, showTriggerInDisplay);
 
         // Save current selection after change to be able to restore caret position after rerendering
         let selectionStartAfter = ev.target.selectionStart;
@@ -197,7 +212,14 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
         // Adjust selection range in case a mention will be deleted by the characters outside of the
         // selection range that are automatically deleted
-        const startOfMention = findStartOfMentionInPlainText(finalValue, dataSources, ev.target.selectionStart || 0);
+        const cursorPosition = ev.target.selectionStart || 0;
+        const startOfMention = findStartOfMentionInPlainText(
+            finalValue,
+            dataSources,
+            cursorPosition,
+            showTriggerInDisplay,
+        );
+
         if (startOfMention !== undefined && selectionEndAfter !== null && selectionEndAfter > startOfMention) {
             // only if a deletion has taken place
             const data = (ev.nativeEvent as any).data;
@@ -208,7 +230,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         setSelectionStart(selectionStartAfter);
         setSelectionEnd(selectionEndAfter);
 
-        const mentions = getMentions(newValue, dataSources);
+        const mentions = getMentions(newValue, dataSources, showTriggerInDisplay);
 
         // Propagate change
         const onChange = props.onChange || setStateValue;
@@ -221,9 +243,11 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         props.onSelect?.(ev);
     };
 
+    const inputFieldText = getPlainText(finalValue, dataSources, props.multiline, showTriggerInDisplay);
+
     const inputProps: TextFieldProps = {
         ...others,
-        value: getPlainText(finalValue, dataSources, props.multiline),
+        value: inputFieldText,
         onChange: handleChange,
         onSelect: handleSelect,
         onBlur: handleBlur,
@@ -249,6 +273,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 multiline={inputProps.multiline}
                 color={highlightColor || props.color}
                 highlightTextColor={highlightTextColor}
+                showTriggerInDisplay={showTriggerInDisplay}
             />
             <TextField inputRef={(ref) => setInputRef(ref)} {...inputProps} />
             <SuggestionsOverlay
@@ -261,6 +286,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 onSelect={addMention}
                 onMouseDown={handleSuggestionsMouseDown}
                 options={options}
+                showTriggerInDisplay={showTriggerInDisplay}
             />
         </>
     );

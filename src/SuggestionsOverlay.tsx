@@ -50,10 +50,23 @@ interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
 
     /** */
     options?: MentionsTextFieldOptions;
+
+    /** Whether to show trigger character in displayed mention text. */
+    showTriggerInDisplay?: boolean;
 }
 
 function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOverlayProps<T>) {
-    const { value, dataSources, selectionStart, selectionEnd, cursorRef, onSelect, onMouseDown, options } = props;
+    const {
+        value,
+        dataSources,
+        selectionStart,
+        selectionEnd,
+        cursorRef,
+        onSelect,
+        onMouseDown,
+        showTriggerInDisplay,
+        options,
+    } = props;
     const ulElement = useRef<HTMLUListElement>(null);
     const [suggestions, setSuggestions] = useState<SuggestionsMap<T>>({});
     const [focusIndex, setFocusIndex] = useState(0);
@@ -127,15 +140,15 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
         if (!selectionStart || selectionStart !== selectionEnd) {
             return;
         }
+        const plainText = getPlainText(value, dataSources, undefined, showTriggerInDisplay);
 
-        const plainText = getPlainText(value, dataSources);
-
-        const positionInValue = mapPlainTextIndex(plainText, dataSources, selectionStart, 'NULL');
+        const positionInValue = mapPlainTextIndex(value, dataSources, selectionStart, 'NULL', showTriggerInDisplay);
         if (!positionInValue) {
             return;
         }
 
-        const substringStartIndex = getEndOfLastMention(plainText.substring(0, positionInValue), dataSources);
+        const substringStartIndex = getEndOfLastMention(value, dataSources, showTriggerInDisplay);
+
         const substring = plainText.substring(substringStartIndex, selectionStart);
 
         // Check if suggestions have to be shown:
@@ -146,6 +159,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
             }
 
             const regex = makeTriggerRegex(source.trigger || DefaultTrigger, source.allowSpaceInQuery);
+
             const match = substring.match(regex);
             if (match) {
                 const querySequenceStart = substringStartIndex + substring.indexOf(match[1], match.index);
@@ -159,7 +173,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                 );
             }
         });
-    }, [setSuggestions, selectionStart, selectionEnd, dataSources, value, queryDataSource]);
+    }, [setSuggestions, selectionStart, selectionEnd, dataSources, value, queryDataSource, showTriggerInDisplay]);
 
     const clearSuggestions = useCallback(() => {
         setSuggestions({});
