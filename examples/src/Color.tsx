@@ -116,6 +116,7 @@ export const Color = () => {
                         },
                     ]}
                     highlightTextColor={true}
+                    placeholder='Placeholder'
                     focused
                 />
 
@@ -130,6 +131,7 @@ export const Color = () => {
                         },
                     ]}
                     highlightTextColor={true}
+                    placeholder='Placeholder'
                     focused
                 />
 
@@ -144,6 +146,7 @@ export const Color = () => {
                         },
                     ]}
                     highlightTextColor={true}
+                    placeholder='Placeholder'
                     focused
                 />
             </Stack>

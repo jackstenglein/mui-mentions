@@ -256,6 +256,14 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 overscrollBehavior: 'none',
                 color: highlightTextColor ? 'transparent' : 'inherit',
                 caretColor: highlightTextColor ? 'black' : 'inherit',
+                '&::placeholder': {
+                    color: highlightTextColor ? 'text.secondary' : 'inherit',
+                    opacity: highlightTextColor ? '1 !important' : 'inherit',
+                },
+                '&:focus::placeholder': {
+                    color: highlightTextColor ? 'text.secondary' : 'inherit',
+                    opacity: highlightTextColor ? '1 !important' : 'inherit',
+                },
             },
         },
     };
