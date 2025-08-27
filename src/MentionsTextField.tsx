@@ -51,12 +51,17 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      * @default 'primary.light'
      */
     highlightColor?: string;
+
+    /**
+     * A ref to the underlying input element.
+     */
+    inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
 }
 
 export type MentionsTextFieldProps<
     T extends BaseSuggestionData,
     Variant extends TextFieldVariants = TextFieldVariants,
-> = Omit<TextFieldProps<Variant>, 'onChange' | 'defaultValue'> & MentionsTextFieldBaseProps<T>;
+> = Omit<TextFieldProps<Variant>, 'onChange' | 'defaultValue' | 'inputRef'> & MentionsTextFieldBaseProps<T>;
 
 function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFieldProps<T>): ReactNode {
     const [stateValue, setStateValue] = useState<string>(props.defaultValue || '');
@@ -68,6 +73,21 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
+
+    // Function to handle both internal and external refs
+    const handleInputRef = (ref: HTMLInputElement | HTMLTextAreaElement | null) => {
+        setInputRef(ref);
+
+        // Also set the external ref if provided
+        if (externalInputRef) {
+            if (typeof externalInputRef === 'function') {
+                externalInputRef(ref);
+            } else if (externalInputRef && 'current' in externalInputRef && typeof externalInputRef !== 'function') {
+                (externalInputRef as React.MutableRefObject<HTMLInputElement | HTMLTextAreaElement | null>).current =
+                    ref;
+            }
+        }
+    };
 
     useEffect(() => {
         const input = inputRef;
@@ -91,7 +111,14 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         input.setSelectionRange(selectionStart, selectionEnd);
     }, [selectionStart, selectionEnd, inputRef]);
 
-    const { value, defaultValue: _defaultValue, dataSources, highlightColor, ...others } = props;
+    const {
+        value,
+        defaultValue: _defaultValue,
+        dataSources,
+        highlightColor,
+        inputRef: externalInputRef,
+        ...others
+    } = props;
     const finalValue = value !== undefined ? value : stateValue;
 
     const handleBlur = () => {
@@ -224,7 +251,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 multiline={inputProps.multiline}
                 color={highlightColor || props.color}
             />
-            <TextField inputRef={(ref) => setInputRef(ref)} {...inputProps} />
+            <TextField inputRef={handleInputRef} {...inputProps} />
             <SuggestionsOverlay
                 value={finalValue}
                 dataSources={dataSources}
