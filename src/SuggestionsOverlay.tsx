@@ -58,7 +58,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
 
     useEffect(() => {
         const current = ulElement.current;
-        if (!scrollFocusedIntoView || !current) {
+        if (!scrollFocusedIntoView || !current || current.children.length === 0) {
             return;
         }
 
@@ -217,6 +217,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                 focusIndex={focusIndex}
                 setFocusIndex={setFocusIndex}
                 setScrollFocusedIntoView={setScrollFocusedIntoView}
+                loading={loading}
             />
             <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' sx={{ zIndex: 2 }}>
                 <Paper elevation={8} onMouseDown={onMouseDown}>
@@ -252,19 +253,25 @@ interface KeyboardListenerProps<T extends BaseSuggestionData> {
     setFocusIndex: (v: number) => void;
     setScrollFocusedIntoView: (v: boolean) => void;
     onSelect: (result: SuggestionData<T>, queryInfo: any) => void;
+    loading: boolean;
 }
 
 function KeyboardListener<T extends BaseSuggestionData>(props: KeyboardListenerProps<T>): ReactNode {
-    const { suggestions, clearSuggestions, focusIndex, setFocusIndex, setScrollFocusedIntoView, onSelect } = props;
+    const { suggestions, clearSuggestions, focusIndex, setFocusIndex, setScrollFocusedIntoView, onSelect, loading } =
+        props;
 
     useEffect(() => {
         const shiftFocus = (delta: number) => {
+            if (loading) return;
+
             const suggestionsCount = countSuggestions(suggestions);
             setFocusIndex((suggestionsCount + focusIndex + delta) % suggestionsCount);
             setScrollFocusedIntoView(true);
         };
 
         const selectFocused = () => {
+            if (loading) return;
+
             const { result, queryInfo }: { result: SuggestionData<T>; queryInfo: SuggestionsQueryInfo } = Object.values(
                 suggestions,
             ).reduce(
@@ -308,7 +315,7 @@ function KeyboardListener<T extends BaseSuggestionData>(props: KeyboardListenerP
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [suggestions, clearSuggestions, focusIndex, setFocusIndex, onSelect, setScrollFocusedIntoView]);
+    }, [suggestions, clearSuggestions, focusIndex, setFocusIndex, onSelect, setScrollFocusedIntoView, loading]);
 
     return null;
 }
