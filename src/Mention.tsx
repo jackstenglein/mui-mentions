@@ -25,7 +25,7 @@ const Mention: React.FC<MentionProps> = ({ display, color, highlightTextColor })
                         top: '-2px',
                         right: '0px',
                         bottom: '0px',
-                        color: (theme) => theme.palette.primary.main,
+                        color: (theme) => getColor(theme.palette.mode, color),
                     }}
                 >
                     {display}
