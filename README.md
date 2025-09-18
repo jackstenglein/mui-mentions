@@ -1,16 +1,10 @@
-# @jackstenglein/mui-mentions
+# @firstshift.ai/mui-mentions
 
 [![NPM version][npm-image]][npm-url]
 [![Build][github-build]][github-build-url]
 ![npm-typescript]
 [![License][github-license]][github-license-url]
 
-[Live Demo](https://jackstenglein.github.io/mui-mentions/)
-
-[npm-url]: https://www.npmjs.com/package/@jackstenglein/mui-mentions
-[npm-image]: https://img.shields.io/npm/v/@jackstenglein/mui-mentions
-[github-license]: https://img.shields.io/github/license/jackstenglein/mui-mentions
-[github-license-url]: https://github.com/jackstenglein/mui-mentions/blob/master/LICENSE
-[github-build]: https://github.com/jackstenglein/mui-mentions/actions/workflows/publish.yml/badge.svg
-[github-build-url]: https://github.com/jackstenglein/mui-mentions/actions/workflows/publish.yml
-[npm-typescript]: https://img.shields.io/npm/types/@jackstenglein/mui-mentions
+[github-license-url]: https://github.com/anthony-restuccia-firstshift/mui-mentions/blob/master/LICENSE
+[github-build]: https://github.com/anthony-restuccia-firstshift/mui-mentions/actions/workflows/publish.yml/badge.svg
+[github-build-url]: https://github.com/anthony-restuccia-firstshift/mui-mentions/actions/workflows/publish.yml
