@@ -7,9 +7,33 @@ interface MentionProps {
 
     /** The color of the highlight. */
     color?: string;
+
+    /** Whether to use text color highlighting instead of background color. */
+    highlightTextColor?: boolean;
 }
 
-const Mention: React.FC<MentionProps> = ({ display, color }) => {
+const Mention: React.FC<MentionProps> = ({ display, color, highlightTextColor }) => {
+    if (highlightTextColor) {
+        return (
+            <Box component='span' sx={{ position: 'relative' }}>
+                {display}
+                <Box
+                    component='span'
+                    sx={{
+                        position: 'absolute',
+                        left: '0px',
+                        top: '-2px',
+                        right: '0px',
+                        bottom: '0px',
+                        color: (theme) => getColor(theme.palette.mode, color),
+                    }}
+                >
+                    {display}
+                </Box>
+            </Box>
+        );
+    }
+
     return (
         <Box component='span' sx={{ position: 'relative' }}>
             {display}

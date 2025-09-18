@@ -11,7 +11,8 @@ export const Color = () => {
                 <Typography>
                     The color prop changes the outline color of the text field when focused. The mention highlight color
                     is also set to match. To change the mention highlight color independently of the outline color, use
-                    the highlightColor prop.
+                    the highlightColor prop. Use highlightTextColor to highlight mentions with text color instead of
+                    background color.
                 </Typography>
             </Stack>
 
@@ -100,6 +101,49 @@ export const Color = () => {
                     ]}
                     color='warning'
                     highlightColor='#616161'
+                    focused
+                />
+            </Stack>
+
+            <Stack direction='row' spacing={2}>
+                <MentionsTextField
+                    label='Text Color Highlighting'
+                    fullWidth
+                    defaultValue={defaultValue}
+                    dataSources={[
+                        {
+                            data: stormlight,
+                        },
+                    ]}
+                    highlightTextColor={true}
+                    focused
+                />
+
+                <MentionsTextField
+                    variant='filled'
+                    label='Filled with Text Color'
+                    fullWidth
+                    defaultValue={defaultValue}
+                    dataSources={[
+                        {
+                            data: stormlight,
+                        },
+                    ]}
+                    highlightTextColor={true}
+                    focused
+                />
+
+                <MentionsTextField
+                    variant='standard'
+                    label='Standard with Text Color'
+                    fullWidth
+                    defaultValue={defaultValue}
+                    dataSources={[
+                        {
+                            data: stormlight,
+                        },
+                    ]}
+                    highlightTextColor={true}
                     focused
                 />
             </Stack>
