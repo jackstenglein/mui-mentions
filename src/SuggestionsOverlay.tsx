@@ -181,18 +181,23 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
         return Object.values(suggestions).reduce(
             (accResults, { results, queryInfo }) => [
                 ...accResults,
-                ...results.map((result: SuggestionData<T>, index: number) => (
-                    <Suggestion
-                        key={result.id}
-                        id={result.id}
-                        query={queryInfo.query}
-                        index={index}
-                        suggestion={result}
-                        focused={index === focusIndex}
-                        onClick={() => handleSelect(result, queryInfo)}
-                        onMouseEnter={() => handleMouseEnter(index)}
-                    />
-                )),
+                ...results.map((result: SuggestionData<T>, index: number) => {
+                    const dataSource = dataSources[queryInfo.childIndex];
+                    const { renderSuggestion } = dataSource ?? {};
+                    return (
+                        <Suggestion
+                            key={result.id}
+                            id={result.id}
+                            query={queryInfo.query}
+                            index={index}
+                            suggestion={result}
+                            focused={index === focusIndex}
+                            onClick={() => handleSelect(result, queryInfo)}
+                            onMouseEnter={() => handleMouseEnter(index)}
+                            renderSuggestion={renderSuggestion}
+                        />
+                    )
+                }),
             ],
             [],
         );
@@ -225,10 +230,10 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                         {renderedSuggestions.length > 0
                             ? renderedSuggestions
                             : loading && (
-                                  <Stack justifyContent='center' alignItems='center' height='40vh'>
-                                      <CircularProgress />
-                                  </Stack>
-                              )}
+                                <Stack justifyContent='center' alignItems='center' height='40vh'>
+                                    <CircularProgress />
+                                </Stack>
+                            )}
                     </List>
                 </Paper>
             </Popper>

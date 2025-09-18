@@ -34,6 +34,32 @@ export function DefaultDisplayTransform(id: string, display?: string, convertSpa
     return display?.replace(/ /g, '\u00A0') || id.replace(/ /g, '\u00A0');
 }
 
+export interface SuggestionProps<T extends BaseSuggestionData> {
+    /** The id of the suggestion. */
+    id: string;
+
+    /** The search string generating the suggestion list. */
+    query: string;
+
+    /** The index of the suggestion. */
+    index: number;
+
+    /** The suggestion itself. */
+    suggestion: SuggestionData<T>;
+
+    /** Whether the suggestion is focused by the user. */
+    focused?: boolean;
+
+    /** A function to customize the suggestion renderer. */
+    renderSuggestion?: (props: SuggestionProps<T>) => JSX.Element;
+
+    /** Called when the suggestion is clicked. */
+    onClick?: React.MouseEventHandler<HTMLDivElement>;
+
+    /** Called when the user mouses over the suggestion. */
+    onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+}
+
 /**
  * A data source for suggestions displayed in the pop up.
  */
@@ -96,6 +122,9 @@ export interface SuggestionDataSource<T extends BaseSuggestionData> {
      * @param end The end index of the suggestion in the value.
      */
     onAdd?: (suggestion: SuggestionData<T>, start: number, end: number) => void;
+
+    /** A function to customize the suggestion renderer. */
+    renderSuggestion?: (props: SuggestionProps<T>) => React.ReactElement;
 }
 
 /** A suggestion displayed to the user in the editor pop up. */
