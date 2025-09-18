@@ -36,7 +36,7 @@ interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
     loading: boolean;
 
     /** A ref to the element which keeps track of the cursor position. */
-    cursorRef: React.RefObject<HTMLSpanElement>;
+    cursorRef: React.RefObject<HTMLSpanElement | null>;
 
     /** Callback invoked with the selected suggestion. */
     onSelect: (

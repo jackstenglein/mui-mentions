@@ -1,5 +1,5 @@
 import { ListItemButton } from '@mui/material';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, type JSX } from 'react';
 import { BaseSuggestionData, DefaultDisplayTransform, SuggestionData } from './types';
 
 interface SuggestionProps<T extends BaseSuggestionData> {

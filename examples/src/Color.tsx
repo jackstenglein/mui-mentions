@@ -107,7 +107,7 @@ export const Color = () => {
 
             <Stack direction='row' spacing={2}>
                 <MentionsTextField
-                    label='Text Color Highlighting'
+                    label='Outlined Secondary; Text Color Highlighting'
                     fullWidth
                     defaultValue={defaultValue}
                     dataSources={[
@@ -115,13 +115,14 @@ export const Color = () => {
                             data: stormlight,
                         },
                     ]}
+                    color='secondary'
                     highlightTextColor={true}
                     focused
                 />
 
                 <MentionsTextField
                     variant='filled'
-                    label='Filled with Text Color'
+                    label='Filled Success; Text Color Highlighting with Error'
                     fullWidth
                     defaultValue={defaultValue}
                     dataSources={[
@@ -129,13 +130,15 @@ export const Color = () => {
                             data: stormlight,
                         },
                     ]}
+                    color='success'
+                    highlightColor='error'
                     highlightTextColor={true}
                     focused
                 />
 
                 <MentionsTextField
                     variant='standard'
-                    label='Standard with Text Color'
+                    label='Standard Warning; Text Color Highlighting with #616161'
                     fullWidth
                     defaultValue={defaultValue}
                     dataSources={[
@@ -143,6 +146,8 @@ export const Color = () => {
                             data: stormlight,
                         },
                     ]}
+                    color='warning'
+                    highlightColor='#616161'
                     highlightTextColor={true}
                     focused
                 />

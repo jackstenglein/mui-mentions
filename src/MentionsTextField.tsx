@@ -58,8 +58,8 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
     inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
 
     /**
-     * If true, mentions will be highlighted with text color (theme.palette.primary.main)
-     * instead of background color.
+     * If true, mentions will be highlighted with text color instead of background color.
+     * The text color will be set to hightlightColor (or color if highlightColor is unspecified).
      * @default false
      */
     highlightTextColor?: boolean;
@@ -241,11 +241,13 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
         onChange: handleChange,
         onSelect: handleSelect,
         onBlur: handleBlur,
-        inputProps: {
-            sx: {
-                overscrollBehavior: 'none',
-                color: highlightTextColor ? 'transparent' : 'inherit',
-                caretColor: highlightTextColor ? 'black' : 'inherit',
+        slotProps: {
+            htmlInput: {
+                sx: {
+                    overscrollBehavior: 'none',
+                    color: highlightTextColor ? 'transparent' : undefined,
+                    caretColor: highlightTextColor ? (theme) => theme.palette.text.primary : undefined,
+                },
             },
         },
     };

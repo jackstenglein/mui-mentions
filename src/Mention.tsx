@@ -13,43 +13,30 @@ interface MentionProps {
 }
 
 const Mention: React.FC<MentionProps> = ({ display, color, highlightTextColor }) => {
-    if (highlightTextColor) {
-        return (
-            <Box component='span' sx={{ position: 'relative' }}>
-                {display}
+    return (
+        <Box
+            component='span'
+            sx={{
+                position: 'relative',
+                color: highlightTextColor ? (theme) => getColor(theme.palette.mode, color) : 'transparent',
+            }}
+        >
+            {display}
+            {!highlightTextColor && (
                 <Box
                     component='span'
                     sx={{
                         position: 'absolute',
-                        left: '0px',
+                        left: '-1px',
                         top: '-2px',
-                        right: '0px',
-                        bottom: '0px',
-                        color: (theme) => getColor(theme.palette.mode, color),
+                        bottom: 0,
+                        right: '-1px',
+                        backgroundColor: (theme) => getColor(theme.palette.mode, color),
+                        borderRadius: '3px',
+                        color: 'transparent',
                     }}
-                >
-                    {display}
-                </Box>
-            </Box>
-        );
-    }
-
-    return (
-        <Box component='span' sx={{ position: 'relative' }}>
-            {display}
-            <Box
-                component='span'
-                sx={{
-                    position: 'absolute',
-                    left: '-1px',
-                    top: '-2px',
-                    bottom: 0,
-                    right: '-1px',
-                    backgroundColor: (theme) => getColor(theme.palette.mode, color),
-                    borderRadius: '3px',
-                    color: 'transparent',
-                }}
-            ></Box>
+                ></Box>
+            )}
         </Box>
     );
 };

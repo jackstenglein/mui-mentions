@@ -1,15 +1,15 @@
 import { Box, Portal } from '@mui/material';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, type JSX } from 'react';
 import Mention from './Mention';
 import { BaseSuggestionData, SuggestionDataSource } from './types';
 import { iterateMentionsMarkup } from './utils/utils';
 
 interface HighlighterProps<T extends BaseSuggestionData> {
     /** Ref applied to the main container of the highlighter. */
-    highlighterRef: React.RefObject<HTMLDivElement>;
+    highlighterRef: React.RefObject<HTMLDivElement | null>;
 
     /** Ref applied to the element which keeps track of the cursor position. */
-    cursorRef: React.RefObject<HTMLSpanElement>;
+    cursorRef: React.RefObject<HTMLSpanElement | null>;
 
     /** Ref of the input field. */
     inputRef: HTMLInputElement | HTMLTextAreaElement | null;
@@ -131,7 +131,8 @@ function Highlighter<T extends BaseSuggestionData>(props: HighlighterProps<T>): 
                     whiteSpace: multiline ? 'pre-wrap' : 'pre',
                     overflow: 'hidden',
                     overscrollBehavior: 'none',
-                    zIndex: -1,
+                    zIndex: highlightTextColor ? 1 : -1,
+                    pointerEvents: 'none',
                 }}
             >
                 {components}

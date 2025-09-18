@@ -20,7 +20,6 @@ export const Basic = () => {
                     label='Outlined'
                     fullWidth
                     defaultValue={defaultValue}
-                    highlightTextColor
                     dataSources={[
                         {
                             data: stormlight,
