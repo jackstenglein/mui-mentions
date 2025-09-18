@@ -1,5 +1,5 @@
 {
-    "name": "@jackstenglein/mui-mentions",
+    "name": "@firstshift.ai/mui-mentions",
     "version": "0.1.10",
     "description": "@mention people in a MUI TextField",
     "main": "./dist/cjs/index.js",
@@ -19,7 +19,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/jackstenglein/mui-mentions.git"
+        "url": "git+https://github.com/anthony-restuccia-firstshift/mui-mentions.git"
     },
     "keywords": [
         "react",
@@ -28,7 +28,7 @@
         "MUI",
         "textfield"
     ],
-    "author": "Jack Stenglein",
+    "author": "FirstShift.ai, forked from Jack Stenglein",
     "license": "MIT",
     "devDependencies": {
         "@emotion/react": "^11.11.4",
