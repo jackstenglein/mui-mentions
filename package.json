@@ -1,12 +1,12 @@
 {
     "name": "@jackstenglein/mui-mentions",
-    "version": "0.1.11",
+    "version": "0.1.12",
     "description": "@mention people in a MUI TextField",
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
     "types": "./dist/esm/index.d.ts",
     "scripts": {
-        "start": "rm -rf examples/.parcel-cache && parcel examples/src/index.html --dist-dir .parcel-dist",
+        "start": "parcel examples/src/index.html --dist-dir .parcel-dist",
         "docs": "parcel build ./examples --dist-dir docs --public-url .",
         "build": "npm run build:esm && npm run build:cjs",
         "build:esm": "tsc",

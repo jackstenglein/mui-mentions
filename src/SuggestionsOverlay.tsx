@@ -1,4 +1,4 @@
-import { CircularProgress, List, Paper, Popper, Stack } from '@mui/material';
+import { CircularProgress, List, Paper, Popper, PopperProps, Stack } from '@mui/material';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Suggestion from './Suggestion';
 import {
@@ -46,6 +46,9 @@ interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
 
     /** Callback invoked on mouse down in the suggestions overlay. */
     onMouseDown: () => void;
+    slotProps?: {
+        root?: Omit<PopperProps, 'anchorEl' | 'open'>;
+    };
 }
 
 function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOverlayProps<T>) {
@@ -219,7 +222,13 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                 setScrollFocusedIntoView={setScrollFocusedIntoView}
                 loading={loading}
             />
-            <Popper open={true} anchorEl={cursorRef.current} placement='bottom-start' sx={{ zIndex: 2 }}>
+            <Popper
+                placement='bottom-start'
+                {...props.slotProps?.root}
+                sx={{ zIndex: 2, ...props.slotProps?.root?.sx }}
+                open={true}
+                anchorEl={cursorRef.current}
+            >
                 <Paper elevation={8} onMouseDown={onMouseDown}>
                     <List ref={ulElement} sx={{ width: '300px', maxHeight: '40vh', overflow: 'auto' }}>
                         {renderedSuggestions.length > 0

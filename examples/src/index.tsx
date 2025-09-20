@@ -25,6 +25,7 @@ import { Limitations } from './Limitations';
 import { Multiline } from './Multiline';
 import { MultipleDataSources } from './MultipleDataSources';
 import { Sizes } from './Sizes';
+import { SlotProps } from './SlotProps';
 import { Trigger } from './Trigger';
 
 const darkTheme = createTheme({
@@ -76,6 +77,7 @@ const App = () => {
                     <FullWidth />
                     <Controlled />
                     <Color />
+                    <SlotProps />
 
                     <Limitations />
                 </Stack>
