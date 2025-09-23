@@ -1,4 +1,4 @@
-import { PopperProps, TextField, TextFieldProps, TextFieldVariants } from '@mui/material';
+import { TextField, TextFieldProps, TextFieldVariants } from '@mui/material';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import Highlighter from './Highlighter';
 import SuggestionsOverlay from './SuggestionsOverlay';
@@ -9,6 +9,7 @@ import {
     MentionData,
     SuggestionData,
     SuggestionDataSource,
+    SuggestionOverlaySlotProps,
     SuggestionsQueryInfo,
 } from './types';
 import {
@@ -68,7 +69,7 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      * The additional props for inner components. Currently only `suggestionsOverlay` is supported.
      */
     slotProps?: {
-        suggestionsOverlay?: Omit<PopperProps, 'anchorEl' | 'open'>;
+        suggestionsOverlay?: SuggestionOverlaySlotProps;
     };
 }
 
@@ -283,9 +284,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 loading={false}
                 onSelect={addMention}
                 onMouseDown={handleSuggestionsMouseDown}
-                slotProps={
-                    props.slotProps?.suggestionsOverlay ? { root: props.slotProps?.suggestionsOverlay } : undefined
-                }
+                slotProps={props.slotProps?.suggestionsOverlay}
             />
         </>
     );

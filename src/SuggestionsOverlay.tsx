@@ -1,4 +1,4 @@
-import { CircularProgress, List, Paper, Popper, PopperProps, Stack } from '@mui/material';
+import { CircularProgress, List, Paper, Popper, Stack } from '@mui/material';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Suggestion from './Suggestion';
 import {
@@ -6,6 +6,7 @@ import {
     DefaultTrigger,
     SuggestionData,
     SuggestionDataSource,
+    SuggestionOverlaySlotProps,
     Suggestions,
     SuggestionsMap,
     SuggestionsQueryInfo,
@@ -46,9 +47,7 @@ interface SuggestionsOverlayProps<T extends BaseSuggestionData> {
 
     /** Callback invoked on mouse down in the suggestions overlay. */
     onMouseDown: () => void;
-    slotProps?: {
-        root?: Omit<PopperProps, 'anchorEl' | 'open'>;
-    };
+    slotProps?: SuggestionOverlaySlotProps;
 }
 
 function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOverlayProps<T>) {
@@ -224,8 +223,8 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
             />
             <Popper
                 placement='bottom-start'
-                {...props.slotProps?.root}
-                sx={{ zIndex: 2, ...props.slotProps?.root?.sx }}
+                {...props.slotProps?.popper}
+                sx={{ zIndex: 2, ...props.slotProps?.popper?.sx }}
                 open={true}
                 anchorEl={cursorRef.current}
             >

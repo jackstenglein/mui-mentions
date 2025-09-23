@@ -34,9 +34,11 @@ export const SlotProps = () => {
                     ]}
                     slotProps={{
                         suggestionsOverlay: {
-                            placement: 'left-end',
-                            sx: {
-                                outline: '3px solid lime',
+                            popper: {
+                                placement: 'left-end',
+                                sx: {
+                                    outline: '3px solid lime',
+                                },
                             },
                         },
                     }}
