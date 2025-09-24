@@ -1,3 +1,5 @@
+import { PopperProps } from '@mui/material';
+
 /**
  * The minimum data of a suggestion.
  */
@@ -96,6 +98,10 @@ export interface SuggestionDataSource<T extends BaseSuggestionData> {
      * @param end The end index of the suggestion in the value.
      */
     onAdd?: (suggestion: SuggestionData<T>, start: number, end: number) => void;
+}
+
+export interface SuggestionOverlaySlotProps {
+    popper?: Omit<PopperProps, 'anchorEl' | 'open'>;
 }
 
 /** A suggestion displayed to the user in the editor pop up. */

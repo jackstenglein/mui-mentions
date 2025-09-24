@@ -9,6 +9,7 @@ import {
     MentionData,
     SuggestionData,
     SuggestionDataSource,
+    SuggestionOverlaySlotProps,
     SuggestionsQueryInfo,
 } from './types';
 import {
@@ -63,6 +64,13 @@ interface MentionsTextFieldBaseProps<T extends BaseSuggestionData> {
      * @default false
      */
     highlightTextColor?: boolean;
+
+    /**
+     * The additional props for inner components. Currently only `suggestionsOverlay` is supported.
+     */
+    slotProps?: {
+        suggestionsOverlay?: SuggestionOverlaySlotProps;
+    };
 }
 
 export type MentionsTextFieldProps<
@@ -276,6 +284,7 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
                 loading={false}
                 onSelect={addMention}
                 onMouseDown={handleSuggestionsMouseDown}
+                slotProps={props.slotProps?.suggestionsOverlay}
             />
         </>
     );
