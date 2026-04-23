@@ -233,7 +233,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                         {renderedSuggestions.length > 0
                             ? renderedSuggestions
                             : loading && (
-                                  <Stack justifyContent='center' alignItems='center' height='40vh'>
+                                  <Stack sx={{ justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
                                       <CircularProgress />
                                   </Stack>
                               )}
