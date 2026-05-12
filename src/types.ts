@@ -1,4 +1,5 @@
 import { PopperProps } from '@mui/material';
+import { SxProps, Theme } from '@mui/material/styles';
 
 /**
  * The minimum data of a suggestion.
@@ -9,6 +10,9 @@ export interface BaseSuggestionData {
 
     /** The user-facing display string of the suggestion data. */
     display?: string;
+
+    /** The image url */
+    image?: string;
 }
 
 /**
@@ -90,6 +94,19 @@ export interface SuggestionDataSource<T extends BaseSuggestionData> {
      * @default (id, display) => display || id;
      */
     displayTransform?: (id: string, display?: string) => string;
+
+    /**
+     * Whether to show an avatar for each suggestion in the list. When true, suggestions with an
+     * image will display it; those without will show a fallback avatar with their initials.
+     * @default false
+     */
+    showAvatar?: boolean;
+
+    /**
+     * MUI sx prop applied to the Avatar component when {@link showAvatar} is true.
+     * Use this to customize the background color, text color, size, etc. of the fallback avatar.
+     */
+    avatarSx?: SxProps<Theme>;
 
     /**
      * Callback invokved when a suggestion is selected and added to the TextField.
