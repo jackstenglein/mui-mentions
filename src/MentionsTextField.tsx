@@ -120,7 +120,12 @@ function MentionsTextField<T extends BaseSuggestionData>(props: MentionsTextFiel
 
     useEffect(() => {
         const input = inputRef;
-        if (!input || (input.selectionStart === selectionStart && input.selectionEnd === selectionEnd)) {
+        if (
+            !input ||
+            selectionStart === null ||
+            selectionEnd === null ||
+            (input.selectionStart === selectionStart && input.selectionEnd === selectionEnd)
+        ) {
             return;
         }
         input.setSelectionRange(selectionStart, selectionEnd);
