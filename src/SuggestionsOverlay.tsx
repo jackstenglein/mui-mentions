@@ -191,6 +191,8 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
                         index={index}
                         suggestion={result}
                         focused={index === focusIndex}
+                        showAvatar={dataSources[queryInfo.childIndex]?.showAvatar}
+                        avatarSx={dataSources[queryInfo.childIndex]?.avatarSx}
                         onClick={() => handleSelect(result, queryInfo)}
                         onMouseEnter={() => handleMouseEnter(index)}
                     />
@@ -198,7 +200,7 @@ function SuggestionsOverlay<T extends BaseSuggestionData>(props: SuggestionsOver
             ],
             [],
         );
-    }, [suggestions, handleSelect, handleMouseEnter, focusIndex]);
+    }, [suggestions, handleSelect, handleMouseEnter, focusIndex, dataSources]);
 
     if (selectionStart === null || selectionStart !== selectionEnd) {
         // The user either is not typing or has highlighted text,

@@ -25,6 +25,7 @@ import { Limitations } from './Limitations';
 import { Multiline } from './Multiline';
 import { MultipleDataSources } from './MultipleDataSources';
 import { Sizes } from './Sizes';
+import { ShowAvatar } from './ShowAvatar';
 import { SlotProps } from './SlotProps';
 import { Trigger } from './Trigger';
 
@@ -66,6 +67,7 @@ const App = () => {
                     <Trigger />
                     <MultipleDataSources />
                     <AppendSpaceOnAdd />
+                    <ShowAvatar />
                     <DisplayTransform />
                     <AsychronousData />
 
