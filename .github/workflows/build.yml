@@ -13,7 +13,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           # Run "node -v" to check the latest version
-          node-version: 18.x
+          node-version: 22.x
           registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
@@ -21,10 +21,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Publish
-        run: npm publish
-
-        env:
-          # We need this to our NPM account
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
