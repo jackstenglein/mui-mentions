@@ -190,14 +190,7 @@ describe('countSuggestions', () => {
 
 describe('applyChangeToValue', () => {
     it('applies a plain-text insertion to the markup value', () => {
-        const result = applyChangeToValue(
-            'Hello',
-            'Hello!',
-            5,
-            5,
-            6,
-            defaultDataSources,
-        );
+        const result = applyChangeToValue('Hello', 'Hello!', 5, 5, 6, defaultDataSources);
         expect(result).toBe('Hello!');
     });
 

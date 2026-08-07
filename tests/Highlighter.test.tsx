@@ -7,9 +7,7 @@ import { defaultDataSources, markupValue } from './fixtures';
 
 const theme = createTheme();
 
-function renderHighlighter(
-    props: Partial<React.ComponentProps<typeof Highlighter>> = {},
-) {
+function renderHighlighter(props: Partial<React.ComponentProps<typeof Highlighter>> = {}) {
     const highlighterRef = createRef<HTMLDivElement>();
     const cursorRef = createRef<HTMLSpanElement>();
     const parent = document.createElement('div');

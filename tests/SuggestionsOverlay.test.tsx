@@ -110,7 +110,8 @@ describe('SuggestionsOverlay', () => {
     it('loads suggestions from an async data source', async () => {
         const asyncSource = [
             {
-                data: async (query: string) => users.filter((u) => u.display?.toLowerCase().includes(query.toLowerCase())),
+                data: async (query: string) =>
+                    users.filter((u) => u.display?.toLowerCase().includes(query.toLowerCase())),
             },
         ];
 
