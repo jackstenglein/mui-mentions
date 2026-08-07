@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import React from 'react';
 import { MentionsTextField } from '../../src';
-import { avatarShowcase } from './data';
+import { stormlight } from './data';
 
 export const ShowAvatar = () => {
     return (
@@ -9,9 +9,10 @@ export const ShowAvatar = () => {
             <Stack spacing={0.5}>
                 <Typography variant='h5'>Show Avatar</Typography>
                 <Typography>
-                    Use the showAvatar field on the data source to display an avatar next to each suggestion. Suggestions
-                    with an image will display it; those without will show a fallback avatar with their initials. Use
-                    avatarSx to customize the fallback avatar's background color, text color, size, and more.
+                    Use the showAvatar field on the data source to display an avatar next to each suggestion.
+                    Suggestions with an image will display it; those without will show a fallback avatar with their
+                    initials. Use avatarSx to customize the fallback avatar's background color, text color, size, and
+                    more.
                 </Typography>
             </Stack>
 
@@ -21,7 +22,7 @@ export const ShowAvatar = () => {
                     fullWidth
                     dataSources={[
                         {
-                            data: avatarShowcase,
+                            data: stormlight,
                             showAvatar: true,
                         },
                     ]}
@@ -32,7 +33,7 @@ export const ShowAvatar = () => {
                     fullWidth
                     dataSources={[
                         {
-                            data: avatarShowcase,
+                            data: stormlight,
                             showAvatar: true,
                             avatarSx: { bgcolor: 'secondary.main', width: 32, height: 32, fontSize: '0.875rem' },
                         },
